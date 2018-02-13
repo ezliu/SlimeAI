@@ -47,7 +47,7 @@ from time import sleep
 
 
 options = webdriver.ChromeOptions()
-options.add_argument('app=file:///Users/Evan/Documents/code/SlimeJavascript/SlimeVolleyballLegacy.html')
+options.add_argument('app=file:///Users/Evan/Documents/code/slime_ai/SlimeVolleyballLegacy.html')
 #options.add_argument('window-size={},{}'
 #        .format(self.window_width, self.window_height))
 #options.add_argument('window-position={},{}'
