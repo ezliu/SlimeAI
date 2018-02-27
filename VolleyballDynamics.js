@@ -41,7 +41,14 @@ function start(startAsOnePlayer) {
   renderBackground(); // clear the field
   canvas.style.display = 'block';
   menuDiv.style.display = 'none';
-  gameIntervalObject = setInterval(gameIteration, 20);
+  gameIntervalObject = setInterval(asyncStep, 20);
+}
+
+function asyncStep() {
+  action1 = [keysDown[KEY_A], keysDown[KEY_W], keysDown[KEY_D]];
+  action2 = [keysDown[KEY_LEFT], keysDown[KEY_UP], keysDown[KEY_RIGHT]];
+  keysDown = {};
+  step(action1, action2);
 }
 
 function renderBackground() {
@@ -118,6 +125,26 @@ function renderEndOfPoint() {
   ctx.fillStyle = '#000';
   ctx.fillText(endOfPointText,
     (viewWidth - textWidth)/2, courtYPix + (viewHeight - courtYPix)/2);
+}
+
+function step(player1Action, player2Action) {
+  keysDown = {};
+
+  leftKey1 = player1Action[0];
+  upKey1 = player1Action[1];
+  rightKey1 = player1Action[2];
+  keysDown[KEY_A] = leftKey1;
+  keysDown[KEY_W] = upKey1;
+  keysDown[KEY_D] = rightKey1;
+
+  leftKey2 = player2Action[0];
+  upKey2 = player2Action[1];
+  rightKey2 = player2Action[2];
+  keysDown[KEY_LEFT] = leftKey2;
+  keysDown[KEY_UP] = upKey2;
+  keysDown[KEY_RIGHT] = rightKey2;
+
+  gameIteration();
 }
 
 function gameIteration() {
@@ -334,7 +361,7 @@ function spaceKeyDown() {
     }
   }
 }
- 
+
 function endMatch() {
   gameState = GAME_STATE_SHOW_WINNER;
   clearInterval(gameIntervalObject);
