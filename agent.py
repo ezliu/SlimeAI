@@ -16,6 +16,8 @@ class Agent(object):
     def act(self, state):
         state = GPUVariable(torch.FloatTensor(np.expand_dims(state, 0)))
         q_values = self._Q(state)
+        self._epsilon -= 0.0000009  # TODO: Put a real schedule here
+        self._epsilon = max(self._epsilon, 0.1)
         return Action(epsilon_greedy(q_values, self._epsilon)[0])
 
     def update_from_experiences(self, experiences, take_grad_step):
