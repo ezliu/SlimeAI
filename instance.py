@@ -29,6 +29,7 @@ class Instance(object):
         if headless:
             self._driver.get(self._url)
 
+    # TODO: skip to every 4 frames
     def step(self, action1, action2):
         """Takes an action, returns the next state.
 
