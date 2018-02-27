@@ -26,39 +26,25 @@
 \begin{document}
 
 %%%%%%%%% TITLE
-\title{\LaTeX\ Author Guidelines for CVPR Proceedings}
+\title{Comparing Pixel Inputs and Structured Inputs in Reinforcement Learning with Self-Play}
 
-\author{First Author\\
-Institution1\\
-Institution1 address\\
-{\tt\small firstauthor@i1.org}
+\author{Brendon Go\\
+Stanford University\\
+{\tt\small go@cs.stanford.edu}
 % For a paper whose authors are all at the same institution,
 % omit the following lines up until the closing ``}''.
 % Additional authors and addresses can be added with ``\and'',
 % just like the second author.
 % To save space, use either the email address or home page, not both
 \and
-Second Author\\
-Institution2\\
-First line of institution2 address\\
-{\tt\small secondauthor@i2.org}
+Evan Liu\\
+Stanford University\\
+{\tt\small evanliu@cs.stanford.edu}
 }
 
 \maketitle
 %\thispagestyle{empty}
 
-%%%%%%%%% ABSTRACT
-\begin{abstract}
-   The ABSTRACT is to be in fully-justified italicized text, at the top
-   of the left-hand column, below the author and affiliation
-   information. Use the word ``Abstract'' as the title, in 12-point
-   Times, boldface type, centered relative to the column, initially
-   capitalized. The abstract is to be in 10-point, single-spaced type.
-   Leave two blank lines after the Abstract, then begin the main text.
-   Look at previous CVPR abstracts to get a feel for style and length.
-\end{abstract}
-
-%%%%%%%%% BODY TEXT
 \section{Introduction}
 
 In the Reinforcement Learning (RL) paradigm, agents learn to perform complex
@@ -85,7 +71,7 @@ if the poor performance is an artifact of the structure of Atari games or if
 there is a deeper reason. In particular, we focus on a favorite game from the
 90s, Slime Volleyball, where the goal of the game is to hit a ball over a net
 onto the opponent's side of the game. Players win points when the ball hits the
-ground on the opponent's side of the net. We propose to apply deep RL methods to
+ground on the opponent's side of the net. We apply deep RL methods to
 this game with two types of inputs: the pixels of the game screen, and the
 variables used to generate the game, and compare the performance of these
 algorithms on different types of inputs. Success on this project will hopefully
