@@ -165,22 +165,22 @@ function step(player1Action, player2Action) {
 
   return {
     "player1": [
-      slimeLeft.x,
-      slimeLeft.y,
-      slimeLeft.velocityX,
-      slimeLeft.velocityY
+      (slimeLeft.x - 500) / 500,
+      slimeLeft.y / 705,
+      slimeLeft.velocityX / 8,
+      slimeLeft.velocityY / 31
     ],
     "player2": [
-      slimeRight.x,
-      slimeRight.y,
-      slimeRight.velocityX,
-      slimeRight.velocityY
+      (slimeRight.x - 500) / 500,
+      slimeRight.y / 705,
+      slimeRight.velocityX / 8,
+      slimeRight.velocityY / 31
     ],
     "ball": [
-      ball.x,
-      ball.y,
-      ball.velocityX,
-      ball.velocityY
+      (ball.x - 500) / 500,
+      ball.y / 800, //hacky max height no way it goes over 100 over the slime
+      ball.velocityX / MAX_VELOCITY_X,
+      ball.velocityY / MAX_VELOCITY_Y
     ],
     "reward": reward,
     "done": done
@@ -219,8 +219,8 @@ function updateFrame() {
     updateSlimeVelocitiesWithKeys(slimeRight, KEY_LEFT,KEY_RIGHT,KEY_UP);
   }
 
-  updateSlime(slimeLeft, 50 , 445);
-  updateSlime(slimeRight, 555, 950);
+  updateSlime(slimeLeft, 0, 1000);
+  updateSlime(slimeRight, 0, 1000);
 
   // Allows slimes to go accross the net
   //updateSlime(slimeLeft, 0, 1000);
@@ -285,8 +285,8 @@ function updateSlimeVelocitiesWithDoubleKeys(s,left1,left2,right1,right2,up1,up2
 function updateSlime(s, leftLimit, rightLimit) {
   if(s.velocityX != 0) {
     s.x += s.velocityX;
-    //if(s.x < leftLimit) s.x = leftLimit;
-    //else if(s.x > rightLimit) s.x = rightLimit;
+    if(s.x < leftLimit) s.x = leftLimit;
+    else if(s.x > rightLimit) s.x = rightLimit;
   }
   if(s.velocityY != 0 || s.y > 0) {
     s.velocityY -= 2;
@@ -308,6 +308,11 @@ function updateSlime(s, leftLimit, rightLimit) {
       s.x = 540;
       s.velocityX = 0;
     }
+  }
+
+  // add ceiling
+  if (s.y > 705) {
+    s.y = 705;
   }
 }
 
