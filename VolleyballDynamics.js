@@ -42,7 +42,7 @@ function start(startAsOnePlayer) {
   renderBackground(); // clear the field
   canvas.style.display = 'block';
   menuDiv.style.display = 'none';
-  gameIntervalObject = setInterval(asyncStep, 20);
+  //gameIntervalObject = setInterval(asyncStep, 20);
 }
 
 function asyncStep() {
