@@ -1,18 +1,36 @@
+class ObservationMode:
+    PIXEL = 0
+    RAM = 1
+
+
 class Instance(object):
-    def __init__(self, mode, headless=False):
+    def __init__(self, observation_mode, headless=False):
         """
         Args:
-            observation_mode (string): either pixel or ram
+            observation_mode (int): See ObservationMode
             headless (bool): True runs Chrome in headless mode
         """
-        pass
+        self._url = ('app=file:///Users/Evan/Documents/code/slime_ai/'
+                     'SlimeVolleyballLegacy.html')
+        options = webdriver.ChromeOptions()
+        if self.headless:
+            options.add_argument('headless')
+            options.add_argument('disable-gpu')
+            options.add_argument('no-sandbox')
+        else:
+            options.add_argument('app={}'.format(self._url))
+
+        self._driver = webdriver.Chrome(chrome_options=options)
+        self._driver.implicitly_wait(5)
+        if self.headless:
+            self.driver.get(self._url)
 
     def step(self, action1, action2):
         """Takes an action, returns the next state.
         
         Args:
-            action (Action)
-            agent (int): 0 or 1
+            action1 (Action): action from player 1
+            action2 (Action): action from player 2
 
         Returns:
             next_states ((np.array, np.array)): next_states[0] is next state in
@@ -22,7 +40,12 @@ class Instance(object):
                 (reward for player 2 = -reward for player 1)
             done (bool): True if the episode is over
         """
-        pass
+        response = self._driver.execute_script(
+                'step({}, {})'.format(action1, action2))
+        next_states1 = response["player1"] + response["ball"]
+        next_states2 = response["player2"] + response["ball"]
+        return (next_states1, next_states2), response["reward"], \
+                response["done"]
 
     def reset(self):
         """Starts a new episode and returns the first state.
@@ -30,4 +53,7 @@ class Instance(object):
         Returns:
             states ((np.array, np.array)): (player 1 state, player 2 state)
         """
-        pass
+        response = self._driver.execute_script('reset()')
+        next_states1 = response["player1"] + response["ball"]
+        next_states2 = response["player2"] + response["ball"]
+        return (next_states1, next_states2)
