@@ -150,18 +150,8 @@ function step(player1Action, player2Action) {
   keysDown[KEY_UP] = upKey2;
   keysDown[KEY_RIGHT] = rightKey2;
 
-  var endOfPoint = gameIteration();
-
-  reward = 0;
-  if (endOfPoint) {
-    if(ball.x > 500) {
-      reward = 1;
-    } else {
-      reward = -1;
-    }
-  }
-
-  done = slimeLeftScore >= WIN_AMOUNT || slimeRightScore >= WIN_AMOUNT;
+  var reward = gameIteration();
+  var done = slimeLeftScore >= WIN_AMOUNT || slimeRightScore >= WIN_AMOUNT;
 
   return {
     "player1": [
@@ -196,13 +186,13 @@ function gameIteration() {
       console.log("WARNING: updating frame before it was rendered");
     }
 
-    endOfPoint = updateFrame();
+    var reward = updateFrame();
     updatesToPaint++;
     if(updatesToPaint == 1) {
       requestAnimationFrame(renderGame);
     }
   }
-  return endOfPoint;
+  return reward;
 }
 
 // returns true if end of point
@@ -381,19 +371,21 @@ function updateBall() {
     }
   }
 
+  var reward = 0.0;
   // Check for end of point
   if(ball.y < 0) {
     if(ball.x > 500) {
       leftWon = true;
+      reward = 1.0;
       slimeLeftScore++;
     } else {
       leftWon = false;
+      reward = -1.0;
       slimeRightScore++;
     }
     endPoint()
-    return true;
   }
-  return false;
+  return reward;
 }
 
 function spaceKeyDown() {
