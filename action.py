@@ -34,7 +34,7 @@ class Action(object):
             keylist (list[int]): keylist[0] = left, keylist[1] = up,
                 keylist[2] = right, 1 if pressed, 0 if not pressed
         """
-        keylist, _ = zip(*P1_KEYLIST[self._action_index])
+        keylist, _ = self._P1_KEYLIST[self._action_index]
 
         # Convert to p2 reference
         if not first_player:
@@ -44,6 +44,6 @@ class Action(object):
         return keylist
 
     def __str__(self):
-        _, human_readable = zip(*P1_KEYLIST[self._action_index])
+        _, human_readable = self._P1_KEYLIST[self._action_index]
         return "Action({})".format(human_readable)
     __repr__ = __str__
