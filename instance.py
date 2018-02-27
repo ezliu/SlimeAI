@@ -27,7 +27,7 @@ class Instance(object):
 
     def step(self, action1, action2):
         """Takes an action, returns the next state.
-        
+
         Args:
             action1 (Action): action from player 1
             action2 (Action): action from player 2
@@ -49,7 +49,7 @@ class Instance(object):
 
     def reset(self):
         """Starts a new episode and returns the first state.
-        
+
         Returns:
             states ((np.array, np.array)): (player 1 state, player 2 state)
         """
