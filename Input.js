@@ -10,22 +10,17 @@ var KEY_RIGHT = 39
 
 
 var keysDown = {};
-var heldDown = {};
+
 addEventListener("keydown", function(e) {
   console.log("keydown '" + e.keyCode + "'");
   if(e.keyCode == KEY_SPACE) {
     spaceKeyDown();
   } else {
-    if (!heldDown[e.keyCode]) {
-      keysDown[e.keyCode] = true;
-    }
+    keysDown[e.keyCode] = true;
   }
 }, false);
+
 addEventListener("keyup", function(e) {
     console.log("keyup   '" + e.keyCode + "'");
     keysDown[e.keyCode] = false;
 }, false);
-
-function pressKey(keyCode) {
-  keysDown[keyCode] = true;
-}

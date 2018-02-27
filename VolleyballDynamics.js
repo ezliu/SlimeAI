@@ -33,7 +33,8 @@ function start(startAsOnePlayer) {
     slimeAI          = null;
   }
 
-  initRound(true);
+  starting = Math.random() >= 0.5;
+  initRound(starting);
 
   updatesToPaint = 0;
   updateCount = 0;
@@ -41,7 +42,14 @@ function start(startAsOnePlayer) {
   renderBackground(); // clear the field
   canvas.style.display = 'block';
   menuDiv.style.display = 'none';
-  gameIntervalObject = setInterval(gameIteration, 20);
+  gameIntervalObject = setInterval(asyncStep, 20);
+}
+
+function asyncStep() {
+  action1 = [keysDown[KEY_A], keysDown[KEY_W], keysDown[KEY_D]];
+  action2 = [keysDown[KEY_LEFT], keysDown[KEY_UP], keysDown[KEY_RIGHT]];
+  keysDown = {};
+  step(action1, action2);
 }
 
 function renderBackground() {
@@ -120,23 +128,68 @@ function renderEndOfPoint() {
     (viewWidth - textWidth)/2, courtYPix + (viewHeight - courtYPix)/2);
 }
 
+function reset() {
+  start(false);
+}
+
+function step(player1Action, player2Action) {
+  keysDown = {};
+
+  leftKey1 = player1Action[0];
+  upKey1 = player1Action[1];
+  rightKey1 = player1Action[2];
+  keysDown[KEY_A] = leftKey1;
+  keysDown[KEY_W] = upKey1;
+  keysDown[KEY_D] = rightKey1;
+
+  leftKey2 = player2Action[0];
+  upKey2 = player2Action[1];
+  rightKey2 = player2Action[2];
+  keysDown[KEY_LEFT] = leftKey2;
+  keysDown[KEY_UP] = upKey2;
+  keysDown[KEY_RIGHT] = rightKey2;
+
+  gameIteration();
+
+  done = slimeLeftScore >= WIN_AMOUNT || slimeRightScore >= WIN_AMOUNT;
+
+  return {
+    "player1": [
+      slimeLeft.x,
+      slimeLeft.y,
+      slimeLeft.velocityX,
+      slimeLeft.velocityY
+    ],
+    "player2": [
+      slimeRight.x,
+      slimeRight.y,
+      slimeRight.velocityX,
+      slimeRight.velocityY
+    ],
+    "reward": slimeLeftScore - slimeRightScore,
+    "done": done
+  }
+}
+// returns true if end of point
 function gameIteration() {
   if(gameState == GAME_STATE_RUNNING) {
     updateCount++;
-    if(slowMotion && (updateCount % 2) == 0)
-      return;
+    // if(slowMotion && (updateCount % 2) == 0)
+      // return;
     if(updatesToPaint > 0) {
       console.log("WARNING: updating frame before it was rendered");
     }
 
-    updateFrame();
+    endOfPoint = updateFrame();
     updatesToPaint++;
     if(updatesToPaint == 1) {
       requestAnimationFrame(renderGame);
     }
   }
+  return endOfPoint;
 }
 
+// returns true if end of point
 function updateFrame() {
   if(onePlayer) {
     slimeAI.move(false); // Move the right slime
@@ -157,9 +210,7 @@ function updateFrame() {
   //updateSlime(slimeLeft, 0, 1000);
   //updateSlime(slimeRight, 0, 1000);
 
-  if(updateBall()) {
-    return;
-  }
+  return updateBall();
 }
 
 // Game Update Functions
@@ -334,7 +385,7 @@ function spaceKeyDown() {
     }
   }
 }
- 
+
 function endMatch() {
   gameState = GAME_STATE_SHOW_WINNER;
   clearInterval(gameIntervalObject);
