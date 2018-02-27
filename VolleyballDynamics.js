@@ -127,6 +127,13 @@ function renderEndOfPoint() {
     (viewWidth - textWidth)/2, courtYPix + (viewHeight - courtYPix)/2);
 }
 
+function reset() {
+  starting = Math.random() >= 0.5;
+  slimeLeftScore = 0;
+  slimeRightScore = 0;
+  initRound(starting);
+}
+
 function step(player1Action, player2Action) {
   keysDown = {};
 
