@@ -150,10 +150,10 @@ function step(player1Action, player2Action) {
   keysDown[KEY_UP] = upKey2;
   keysDown[KEY_RIGHT] = rightKey2;
 
-  gameIteration();
+  var endOfPoint = gameIteration();
 
   reward = 0;
-  if(ball.y < 0) {
+  if (endOfPoint) {
     if(ball.x > 500) {
       reward = 1;
     } else {
@@ -474,11 +474,11 @@ function endPoint() {
   }
   gameState = GAME_STATE_POINT_PAUSE;
   requestAnimationFrame(renderEndOfPoint);
-
-  setTimeout(function () {
-    if(gameState == GAME_STATE_POINT_PAUSE) {
-      startNextPoint();
-    }
-  }, 700);
+  startNextPoint();
+  //setTimeout(function () {
+  //  if(gameState == GAME_STATE_POINT_PAUSE) {
+  //    startNextPoint();
+  //  }
+  //}, 700);
 }
 
