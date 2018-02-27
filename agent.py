@@ -21,6 +21,10 @@ class Agent(object):
     def update_from_experiences(self, experiences):
         pass
 
+    def sync_target(self):
+        """Syncs the target Q values with the current Q values"""
+        self._target_Q.load_state_dict(self._Q.state_dict())
+
 
 class DQN(nn.Module):
     def __init__(self, num_actions, state_embedder):
