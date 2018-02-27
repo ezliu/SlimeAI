@@ -130,6 +130,28 @@ function renderEndOfPoint() {
 
 function reset() {
   start(false);
+  return {
+    "player1": [
+      slimeLeft.x,
+      slimeLeft.y,
+      slimeLeft.velocityX,
+      slimeLeft.velocityY
+    ],
+    "player2": [
+      slimeRight.x,
+      slimeRight.y,
+      slimeRight.velocityX,
+      slimeRight.velocityY
+    ],
+    "ball": [
+      ball.x,
+      ball.y,
+      ball.velocityX,
+      ball.velocityY
+    ],
+    "reward": slimeLeftScore - slimeRightScore,
+    "done": false
+  }
 }
 
 function step(player1Action, player2Action) {
@@ -165,6 +187,12 @@ function step(player1Action, player2Action) {
       slimeRight.y,
       slimeRight.velocityX,
       slimeRight.velocityY
+    ],
+    "ball": [
+      ball.x,
+      ball.y,
+      ball.velocityX,
+      ball.velocityY
     ],
     "reward": slimeLeftScore - slimeRightScore,
     "done": done
