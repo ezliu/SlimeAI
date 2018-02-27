@@ -15,7 +15,7 @@ class Instance(object):
             headless (bool): True runs Chrome in headless mode
         """
         self._url = ('file:///Users/Evan/Documents/code/slime_ai/'
-                     'SlimeVolleyballLegacy.html')
+                     'CleanVolleyball.html')
         options = webdriver.ChromeOptions()
         if headless:
             options.add_argument('headless')
@@ -45,7 +45,8 @@ class Instance(object):
             done (bool): True if the episode is over
         """
         response = self._driver.execute_script(
-                'step({}, {})'.format(action1, action2))
+                'return step({}, {});'.format(
+                    action1.to_list(True), action2.to_list(False)))
         next_states1 = response["player1"] + response["ball"]
         next_states2 = response["player2"] + response["ball"]
         return (next_states1, next_states2), response["reward"], \
@@ -57,7 +58,7 @@ class Instance(object):
         Returns:
             states ((np.array, np.array)): (player 1 state, player 2 state)
         """
-        response = self._driver.execute_script('reset()')
+        response = self._driver.execute_script('return reset();')
         next_states1 = response["player1"] + response["ball"]
         next_states2 = response["player2"] + response["ball"]
         return (next_states1, next_states2)
