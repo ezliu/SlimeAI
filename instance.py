@@ -1,3 +1,7 @@
+import numpy as np
+from selenium import webdriver
+
+
 class ObservationMode:
     PIXEL = 0
     RAM = 1
@@ -10,10 +14,10 @@ class Instance(object):
             observation_mode (int): See ObservationMode
             headless (bool): True runs Chrome in headless mode
         """
-        self._url = ('app=file:///Users/Evan/Documents/code/slime_ai/'
+        self._url = ('file:///Users/Evan/Documents/code/slime_ai/'
                      'SlimeVolleyballLegacy.html')
         options = webdriver.ChromeOptions()
-        if self.headless:
+        if headless:
             options.add_argument('headless')
             options.add_argument('disable-gpu')
             options.add_argument('no-sandbox')
@@ -22,8 +26,8 @@ class Instance(object):
 
         self._driver = webdriver.Chrome(chrome_options=options)
         self._driver.implicitly_wait(5)
-        if self.headless:
-            self.driver.get(self._url)
+        if headless:
+            self._driver.get(self._url)
 
     def step(self, action1, action2):
         """Takes an action, returns the next state.
