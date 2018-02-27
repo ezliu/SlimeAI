@@ -1,3 +1,4 @@
+import random
 from action import Action
 
 
@@ -6,7 +7,7 @@ class Agent(object):
         pass
 
     def act(self, state):
-        return Action(2)
+        return Action(random.randint(0, 5))
 
     def update_from_experiences(self, experiences):
         pass
