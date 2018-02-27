@@ -33,7 +33,8 @@ function start(startAsOnePlayer) {
     slimeAI          = null;
   }
 
-  initRound(true);
+  starting = Math.random() >= 0.5;
+  initRound(starting);
 
   updatesToPaint = 0;
   updateCount = 0;
@@ -128,10 +129,7 @@ function renderEndOfPoint() {
 }
 
 function reset() {
-  starting = Math.random() >= 0.5;
-  slimeLeftScore = 0;
-  slimeRightScore = 0;
-  initRound(starting);
+  start(false);
 }
 
 function step(player1Action, player2Action) {
@@ -152,6 +150,21 @@ function step(player1Action, player2Action) {
   keysDown[KEY_RIGHT] = rightKey2;
 
   gameIteration();
+
+  return {
+    "player1": [
+      slimeLeft.x,
+      slimeLeft.y,
+      slimeLeft.velocityX,
+      slimeLeft.velocityY
+    ],
+    "player2": [
+      slimeRight.x,
+      slimeRight.y,
+      slimeRight.velocityX,
+      slimeRight.velocityY
+    ],
+  }
 }
 
 function gameIteration() {
