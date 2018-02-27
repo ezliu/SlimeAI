@@ -18,12 +18,43 @@ class Agent(object):
         q_values = self._Q(state)
         return Action(epsilon_greedy(q_values, self._epsilon)[0])
 
-    def update_from_experiences(self, experiences):
-        pass
+    def update_from_experiences(self, experiences, take_grad_step):
+        gamma = 0.99  # TODO: Fix this
+
+        batch_size = len(experiences)
+        states = GPUVariable(torch.FloatTensor(
+            np.array([np.array(e.state) for e in experiences])))
+        actions = GPUVariable(torch.LongTensor(
+            np.array([np.array(e.action) for e in experiences])))
+        next_states = GPUVariable(torch.FloatTensor(
+            np.array([np.array(e.next_state) for e in experiences])))
+        rewards = GPUVariable(
+            torch.FloatTensor(np.array([e.reward for e in experiences])))
+
+        # (batch_size,) 1 if was not done, otherwise 0
+        not_done_mask = GPUVariable(
+                torch.FloatTensor(np.array([1 - e.done for e in experiences])))
+
+        current_state_q_values = self._Q(states).gather(
+                1, actions.unsqueeze(1))
+
+        # DDQN
+        best_actions = torch.max(self._Q(next_states), 1)[1].unsqueeze(1)
+        next_state_q_values = self._target_Q(
+                next_states).gather(1, best_actions).squeeze(1)
+        targets = rewards + gamma * (next_state_q_values * not_done_mask)
+        targets.detach_()  # Don't backprop through targets
+
+        loss_fn = nn.MSELoss()
+        take_grad_step(self._Q, loss_fn(current_state_q_values, targets))
+
 
     def sync_target(self):
         """Syncs the target Q values with the current Q values"""
         self._target_Q.load_state_dict(self._Q.state_dict())
+
+    def parameters(self):
+        return self._Q.parameters()
 
 
 class DQN(nn.Module):
