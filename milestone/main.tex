@@ -80,7 +80,7 @@ games, where the inputs to the RL agent are the game memory (which include
 information like the coordinates of the avatar), current RL methods perform
 poorly, far worse than on the pixel version \citep{atariRAM}.
 
-We propose to investigate this phenomenon on games outside of Atari to determine
+We investigate this phenomenon on games outside of Atari to determine
 if the poor performance is an artifact of the structure of Atari games or if
 there is a deeper reason. In particular, we focus on a favorite game from the
 90s, Slime Volleyball, where the goal of the game is to hit a ball over a net
@@ -92,14 +92,32 @@ algorithms on different types of inputs. Success on this project will hopefully
 lend greater insight into why Atari on RAM states fails, possibly leading to
 novel RL algorithms or insights about the pixel states.
 
+\section{Problem Statement}
+\subsection{Data}
 
-\section{Data}
+We have modified an HTML5 implementation of Slime Volleyball, to use
+as a browser-based simulation environment. We use Selenium to receive the
+state from the browser and to send the agent's actions to the browser. To train
+both a pixel-state and a structured-state model, we modify the simulator to be
+able to generate both states.
 
-We have access to a HTML5 implementation of Slime Volleyball, which we will use
-as a browser-based simulation environment. We will use Selenium to receive the
-state from the browser and to send the agent's actions to the browser. Since we
-are planning on training a model with pixel-state and another with structured-
-state we will modify the simulator to be able to generate both states.
+\subsection{Evaluation}
+
+We define the result of a game to be the difference between our agents final score
+and the opponents final score. The first agent to get 7 points wins the game.
+Thus the results can range from $-7$ to $7$. Slime Volleyball has a one-player
+version wherein the player fights against a hard-coded opponent. As a baseline
+we calculate the average result of a human player against the hard-coded opponent. \\
+
+\noindent We evaluate our agent by taking its average result over 100
+games. We will be able to compare our two models by comparing their respective
+results.
+
+\noindent We think it will also be worthwhile to pit the two models against each
+other in the two player variant of slime volleyball and seeing if the average
+result over 100 games leans one way or the other.
+
+\section{Technical Approach}
 
 \section{Method} We will implement Deep Q-Networks as our policies. Briefly,
 Q-Networks associate with each state $s$ and each action $a$ and value $Q(s, a)$
@@ -107,21 +125,6 @@ estimating the reward that the network will receive for playing action $a$ in
 state $s$. A policy can be recovered from this by playing the action $a$ with
 the highest $Q$ value at each state $s$. These Q-Networks will learn via self-
 play.
-
-\section{Evaluation} We can define the result of a game to be the difference
-between our agents final score and the opponents final score. The first agent to
-get 5 points wins the game. Thus the results can range from $-5$ to $5$. Slime
-Volleyball has a one-player version wherein the player fights against a hard-
-coded opponent. As a baseline we will calculate the average result of a human
-player against the hard-coded opponent. \\
-
-\noindent We will evaluate our agent by taking its average result over 100
-games. We will be able to compare our two models by comparing their respective
-results
-
-\noindent We think it will also be worthwhile to pit the two models against each
-other in the two player variant of slime volleyball and seeing if the average
-result over 100 games leans one way or the other.
 
 
 
