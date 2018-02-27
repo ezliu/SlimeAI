@@ -47,8 +47,8 @@ class Instance(object):
         response = self._driver.execute_script(
                 'return step({}, {});'.format(
                     action1.to_list(True), action2.to_list(False)))
-        next_states1 = response["player1"] + response["ball"]
-        next_states2 = response["player2"] + response["ball"]
+        next_states1 = response["player1"] + response["ball"] + response["player2"]
+        next_states2 = response["player2"] + response["ball"] + response["player1"]
         return (next_states1, next_states2), response["reward"], \
                 response["done"]
 
@@ -59,6 +59,6 @@ class Instance(object):
             states ((np.array, np.array)): (player 1 state, player 2 state)
         """
         response = self._driver.execute_script('return reset();')
-        next_states1 = response["player1"] + response["ball"]
-        next_states2 = response["player2"] + response["ball"]
+        next_states1 = response["player1"] + response["ball"] + response["player2"]
+        next_states2 = response["player2"] + response["ball"] + response["player1"]
         return (next_states1, next_states2)
