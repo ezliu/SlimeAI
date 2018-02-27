@@ -130,28 +130,7 @@ function renderEndOfPoint() {
 
 function reset() {
   start(false);
-  return {
-    "player1": [
-      slimeLeft.x,
-      slimeLeft.y,
-      slimeLeft.velocityX,
-      slimeLeft.velocityY
-    ],
-    "player2": [
-      slimeRight.x,
-      slimeRight.y,
-      slimeRight.velocityX,
-      slimeRight.velocityY
-    ],
-    "ball": [
-      ball.x,
-      ball.y,
-      ball.velocityX,
-      ball.velocityY
-    ],
-    "reward": slimeLeftScore - slimeRightScore,
-    "done": false
-  }
+  return step([0,0,0],[0,0,0]);
 }
 
 function step(player1Action, player2Action) {
@@ -172,6 +151,15 @@ function step(player1Action, player2Action) {
   keysDown[KEY_RIGHT] = rightKey2;
 
   gameIteration();
+
+  reward = 0;
+  if(ball.y < 0) {
+    if(ball.x > 500) {
+      reward = 1;
+    } else {
+      reward = -1;
+    }
+  }
 
   done = slimeLeftScore >= WIN_AMOUNT || slimeRightScore >= WIN_AMOUNT;
 
@@ -194,7 +182,7 @@ function step(player1Action, player2Action) {
       ball.velocityX,
       ball.velocityY
     ],
-    "reward": slimeLeftScore - slimeRightScore,
+    "reward": reward,
     "done": done
   }
 }
