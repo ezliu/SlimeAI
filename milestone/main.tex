@@ -207,14 +207,14 @@ the network we utilize for updates.
 
 As previously mentioned, when both agents are updating, the environment
 dynamics appear non-stationary. Notably, in multi-agent systems, independent
-Q-Learning (IQL), where each agent maintains its own $Q$ function fails
-precisely because of the non-stationaryness (TODO: cite).  To get around this,
-we use the following self-play algorithm. We keep track of the fixed best
-current agent (initialized randomly). We match the best current agent against
-a contender agent, which is optimized for a fixed number of episodes. If the
-contender agent beats the current agent, then the contender agent becomes the
-new best current agent, and a new contender is created. New contenders are
-initialized from the parameters of the current best agent.
+Q-Learning \citep{tan1993multi}, where each agent maintains its own $Q$
+function fails precisely because of the non-stationaryness.  To
+get around this, we use the following self-play algorithm. We keep track of
+the fixed best current agent (initialized randomly). We match the best current
+agent against a contender agent, which is optimized for a fixed number of
+episodes. If the contender agent beats the current agent, then the contender
+agent becomes the new best current agent, and a new contender is created. New
+contenders are initialized from the parameters of the current best agent.
 
 \section{Intermediate/Preliminary Results}
 
