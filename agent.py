@@ -7,6 +7,14 @@ from action import Action
 from utils import GPUVariable
 
 
+class RandomAgent(object):
+    def __init__(self, num_actions):
+        self._num_actions = num_actions
+
+    def act(self, state):
+        return Action(random.randint(0, self._num_actions - 1))
+
+
 class Agent(object):
     def __init__(self, num_actions, epsilon=1.):
         self._Q = DQN(num_actions, StateEmbedder())

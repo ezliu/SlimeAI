@@ -1,4 +1,4 @@
-from agent import Agent
+from agent import Agent, RandomAgent
 from instance import Instance, ObservationMode
 from time import sleep
 from replay import ReplayBuffer, Experience
@@ -9,7 +9,7 @@ import torch.optim as optim
 
 env = Instance(ObservationMode.RAM)
 p1 = Agent(6)
-p2 = Agent(6)
+p2 = RandomAgent(6)
 replay_buffer = ReplayBuffer(1000000)
 optimizer = optim.Adam(p1.parameters(), lr=0.00025)
 
@@ -67,7 +67,7 @@ with tqdm(total=100000000) as progress:
                 experiences = replay_buffer.sample(32)
                 p1.update_from_experiences(experiences, take_grad_step)
 
-            if frames % 100 == 0:
+            if frames % 10000 == 0:
                 p1.sync_target()
 
             if done:
