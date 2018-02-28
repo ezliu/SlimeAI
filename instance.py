@@ -14,7 +14,7 @@ class Instance(object):
             observation_mode (int): See ObservationMode
             headless (bool): True runs Chrome in headless mode
         """
-        self._url = ('file:///Users/Evan/Documents/code/slime_ai/'
+        self._url = ('file:///Users/brendongo/Desktop/CS231A/SlimeAI/'
                      'CleanVolleyball.html')
         options = webdriver.ChromeOptions()
         if headless:
