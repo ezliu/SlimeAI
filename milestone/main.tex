@@ -176,33 +176,32 @@ against these novel strategies.
 
 \subsection{Deep Q-Learning}
 
-We implement the policies for each agent as Deep Q-Networks (TODO:
-cite). In Deep Q-Learning, a value function $Q(s, a)$ is learned that
-estimates the discounted reward to go that the agent will receive for playing
-action $a$ in state $s$ and continuing to follow its current policy. The
-learned $Q$ function encodes a policy, which at each state $s$ plays the
-action $a = argmax_{a \in \mathcal{A}}Q(s, a)$. Our $Q$ functions are
-implemented as neural networks. For structured state inputs, the network
-consists of several multi-layer perceptrons (MLP). For pixel state inputs, the
-network consists of several convolutional layers, followed by a MLP. The
-encoded policy can be made non-greedy by following an $\epsilon$-greedy
-policy, which greedily chooses the best action $a$ according to $Q$ with
-probability $1 - \epsilon$ and choosing a random action with probability
-$\epsilon$. We utilize an $\epsilon$-greedy policy with an $\epsilon$ that
-anneals to $0$ during training to ensure that the policy adequately explores
-the state and action spaces.
+We implement the policies for each agent as Deep Q-Networks \citep{nature2013}.
+In Deep Q-Learning, a value function $Q(s, a)$ is learned that estimates the
+discounted reward to go that the agent will receive for playing action $a$ in
+state $s$ and continuing to follow its current policy. The learned $Q$ function
+encodes a policy, which at each state $s$ plays the action $a = argmax_{a \in
+\mathcal{A}}Q(s, a)$. Our $Q$ functions are implemented as neural networks. For
+structured state inputs, the network consists of several multi-layer perceptrons
+(MLP). For pixel state inputs, the network consists of several convolutional
+layers, followed by a MLP. The encoded policy can be made non-greedy by
+following an $\epsilon$-greedy policy, which greedily chooses the best action
+$a$ according to $Q$ with probability $1 - \epsilon$ and choosing a random
+action with probability $\epsilon$. We utilize an $\epsilon$-greedy policy with
+an $\epsilon$ that anneals to $0$ during training to ensure that the policy
+adequately explores the state and action spaces.
 
-Following (TODO: Cite), we make use of experience replay for learning $Q$. The
-agent follows an the $\epsilon$-greedy policy recording all transitions $(s,
-a, r, s')$ in a fixed-size replay buffer, where $s$ is the state, $a$ is the
-action played in state $s$, $r$ is the received reward, and $s'$ is the
-resulting new state. To update, several of these transitions are sampled and
-the following loss function is optimized: $||Q(s, a) - (r + \gamma \max_{a'
-\in A}Q(s', a'))||^2$. Experience replay enables updates with removed temporal
-correlations. In addition, Q-learning requires many updates to ensure that
-later $Q$ values propagate backwards to earlier $Q$ values. We also make usage
-of double DQN (TODO: cite) so that the network that we max the actions over is
-different from the network we utilize for updates.
+Following \citep{nature2013}, we make use of experience replay for learning $Q$. The
+agent follows an the $\epsilon$-greedy policy recording all transitions $(s, a,
+r, s')$ in a fixed-size replay buffer, where $s$ is the state, $a$ is the action
+played in state $s$, $r$ is the received reward, and $s'$ is the resulting new
+state. To update, several of these transitions are sampled and the following
+loss function is optimized: $||Q(s, a) - (r + \gamma \max_{a' \in A}Q(s',
+a'))||^2$. Experience replay enables updates with removed temporal correlations.
+In addition, Q-learning requires many updates to ensure that later $Q$ values
+propagate backwards to earlier $Q$ values. We also make usage of double DQN
+\citep{doubleDQN} so that the network that we max the actions over is different from
+the network we utilize for updates.
 
 \subsection{Self-Play}
 
