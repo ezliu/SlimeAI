@@ -1,3 +1,4 @@
+import abc
 import numpy as np
 import random
 import torch
@@ -7,16 +8,34 @@ from action import Action
 from utils import GPUVariable
 
 
-class RandomAgent(object):
+class Agent(nn.Module):
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    def act(self, state):
+        """Takes a single state and returns an action to play in that state.
+
+        Args:
+            state (np.array)
+
+        Returns:
+            int
+        """
+        raise NotImplementedError()
+
+
+class RandomAgent(Agent):
     def __init__(self, num_actions):
+        super(RandomAgent, self).__init__()
         self._num_actions = num_actions
 
     def act(self, state):
         return Action(random.randint(0, self._num_actions - 1))
 
 
-class Agent(object):
+class DQNAgent(nn.Module):
     def __init__(self, num_actions, epsilon=1.):
+        super(DQNAgent, self).__init__()
         self._Q = DQN(num_actions, StateEmbedder())
         self._target_Q = DQN(num_actions, StateEmbedder())
         self._epsilon = epsilon
@@ -58,13 +77,9 @@ class Agent(object):
         loss_fn = nn.MSELoss()
         take_grad_step(self._Q, loss_fn(current_state_q_values, targets))
 
-
     def sync_target(self):
         """Syncs the target Q values with the current Q values"""
         self._target_Q.load_state_dict(self._Q.state_dict())
-
-    def parameters(self):
-        return self._Q.parameters()
 
 
 class DQN(nn.Module):

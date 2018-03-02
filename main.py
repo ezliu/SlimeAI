@@ -1,4 +1,4 @@
-from agent import Agent, RandomAgent
+from agent import DQNAgent, RandomAgent
 from instance import Instance, ObservationMode
 from time import sleep
 from replay import ReplayBuffer, Experience
@@ -8,7 +8,7 @@ import collections
 import torch.optim as optim
 
 env = Instance(ObservationMode.RAM)
-p1 = Agent(6)
+p1 = DQNAgent(6)
 p2 = RandomAgent(6)
 replay_buffer = ReplayBuffer(1000000)
 optimizer = optim.Adam(p1.parameters(), lr=0.00025)
