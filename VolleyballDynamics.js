@@ -1,5 +1,6 @@
 var TWO_PI = Math.PI*2;
 var WIN_AMOUNT = 7;
+var RENDER_GLOBAL = false;
 
 function start(startAsOnePlayer) {
   onePlayer = startAsOnePlayer;
@@ -192,7 +193,7 @@ function gameIteration(render) {
 
     var reward = updateFrame();
     updatesToPaint++;
-    if(render && updatesToPaint == 1) {
+    if((RENDER_GLOBAL || render) && updatesToPaint == 1) {
       requestAnimationFrame(renderGame);
     }
   }
