@@ -29,31 +29,6 @@ OBSERVATION_MODE = ObservationMode.RAM
 
 env = Instance(OBSERVATION_MODE)
 
-def take_grad_step(model, loss, max_grad_norm=float('inf')):
-    """Try to take a gradient step w.r.t. loss.
-
-    If the gradient is finite, takes a step. Otherwise, does nothing.
-
-    Args:
-        loss (Variable): a differentiable scalar variable
-        max_grad_norm (float): gradient norm is clipped to this value.
-
-    Returns:
-        finite_grads (bool): True if the gradient was finite.
-        grad_norm (float): norm of the gradient (BEFORE clipping)
-    """
-    optimizer.zero_grad()
-    loss.backward()
-
-    # clip according to the max allowed grad norm
-    grad_norm = clip_grad_norm(model.parameters(), max_grad_norm, norm_type=2)
-    # (this returns the gradient norm BEFORE clipping)
-
-    optimizer.step()
-
-    return grad_norm
-
-
 def evaluate(challenger, leader, num_episodes=10):
     """Rolls out num_episodes episodes and returns the average score of the
     challenger against the leaders.
@@ -119,13 +94,14 @@ def challenger_round():
     challenger_parameters = []
     for i in xrange(NUM_LEADERS):
         challenger = DQNAgent(6, LinearSchedule(EPS_START, EPS_END, TRAIN_FRAMES))
-        leader = DQNAgent(6, LinearSchedule(0.1, 0.1, 500000))
         if i < len(leader_checkpoints):
+            leader = DQNAgent(6, LinearSchedule(0.1, 0.1, 500000))
             leader_path = os.path.join(LEADER_DIR, leader_checkpoints[i])
             print "LOADING CHECKPOINT: {}".format(leader_path)
             challenger.load_state_dict(torch.load(leader_path))
             leader.load_state_dict(torch.load(leader_path))
         else:
+            leader = RandomAgent(6)
             print "INITIALIZING NEW CHALLENGER AND LEADER"
         challenger_parameters += challenger.parameters()
         challengers.append(challenger)
@@ -135,6 +111,30 @@ def challenger_round():
     challenger = EnsembleDQNAgent(challengers)
     leader = EnsembleDQNAgent(leaders)
     replay_buffer = ReplayBuffer(1000000)
+
+    def take_grad_step(model, loss, max_grad_norm=float('inf')):
+        """Try to take a gradient step w.r.t. loss.
+
+        If the gradient is finite, takes a step. Otherwise, does nothing.
+
+        Args:
+            loss (Variable): a differentiable scalar variable
+            max_grad_norm (float): gradient norm is clipped to this value.
+
+        Returns:
+            finite_grads (bool): True if the gradient was finite.
+            grad_norm (float): norm of the gradient (BEFORE clipping)
+        """
+        optimizer.zero_grad()
+        loss.backward()
+
+        # clip according to the max allowed grad norm
+        grad_norm = clip_grad_norm(model.parameters(), max_grad_norm, norm_type=2)
+        # (this returns the gradient norm BEFORE clipping)
+
+        optimizer.step()
+
+        return grad_norm
 
     rewards = collections.deque(maxlen=1000)
     frames = 0  # number of training frames seen
