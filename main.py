@@ -186,7 +186,7 @@ def challenger_round():
                 if done:
                     break
 
-            if episodes % 100 == 0:
+            if episodes % 300 == 0:
                 print "Evaluation: {}".format(
                         evaluate(challenger, leader, EPISODES_EVALUATE_TRAIN))
             print "Episode reward: {}".format(episode_reward)
