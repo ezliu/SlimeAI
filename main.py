@@ -2,16 +2,17 @@ from agent import DQNAgent, RandomAgent
 from instance import Instance, ObservationMode
 from time import sleep
 from replay import ReplayBuffer, Experience
+from schedule import LinearSchedule
 from tqdm import tqdm
 from torch.nn.utils import clip_grad_norm
 import collections
 import torch.optim as optim
 
 env = Instance(ObservationMode.RAM)
-p1 = DQNAgent(6)
-p2 = RandomAgent(6)
+challenger = DQNAgent(6, LinearSchedule(1., 0.1, 500000))
+leader = DQNAgent(6, LinearSchedule(0.1, 0.1, 500000))
 replay_buffer = ReplayBuffer(1000000)
-optimizer = optim.Adam(p1.parameters(), lr=0.00025)
+optimizer = optim.Adam(challenger.parameters(), lr=0.00025)
 
 def take_grad_step(model, loss, max_grad_norm=float('inf')):
     """Try to take a gradient step w.r.t. loss.
@@ -51,8 +52,8 @@ with tqdm(total=100000000) as progress:
         for _ in xrange(10000):
             frames += 1
             episode_frames += 1
-            action1 = p1.act(states[0])
-            action2 = p2.act(states[1])
+            action1 = challenger.act(states[0])
+            action2 = leader.act(states[1])
             next_states, reward, done = env.step(action1, action2)
             episode_reward += reward
 
@@ -65,10 +66,10 @@ with tqdm(total=100000000) as progress:
             if len(replay_buffer) > 50000 and \
                     frames % 4 == 0:
                 experiences = replay_buffer.sample(32)
-                p1.update_from_experiences(experiences, take_grad_step)
+                challenger.update_from_experiences(experiences, take_grad_step)
 
             if frames % 10000 == 0:
-                p1.sync_target()
+                challenger.sync_target()
 
             if done:
                 break

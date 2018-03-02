@@ -34,18 +34,17 @@ class RandomAgent(Agent):
 
 
 class DQNAgent(nn.Module):
-    def __init__(self, num_actions, epsilon=1.):
+    def __init__(self, num_actions, epsilon_schedule):
         super(DQNAgent, self).__init__()
         self._Q = DQN(num_actions, StateEmbedder())
         self._target_Q = DQN(num_actions, StateEmbedder())
-        self._epsilon = epsilon
+        self._epsilon_schedule = epsilon_schedule
 
     def act(self, state):
         state = GPUVariable(torch.FloatTensor(np.expand_dims(state, 0)))
         q_values = self._Q(state)
-        self._epsilon -= 0.0000009  # TODO: Put a real schedule here
-        self._epsilon = max(self._epsilon, 0.1)
-        return Action(epsilon_greedy(q_values, self._epsilon)[0])
+        epsilon = self._epsilon_schedule.get_epsilon()
+        return Action(epsilon_greedy(q_values, epsilon)[0])
 
     def update_from_experiences(self, experiences, take_grad_step):
         gamma = 0.99  # TODO: Fix this
@@ -140,7 +139,7 @@ def epsilon_greedy(q_values, epsilon):
     """
     batch_size, num_actions = q_values.size()
     _, max_indices = torch.max(q_values, 1)
-    max_indices =  max_indices.cpu().data.numpy()
+    max_indices = max_indices.cpu().data.numpy()
     actions = []
     for i in xrange(batch_size):
         if random.random() > epsilon:
