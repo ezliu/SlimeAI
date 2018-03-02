@@ -72,7 +72,7 @@ def evaluate(challenger, leader, num_episodes=10):
         for _ in xrange(MAX_EPISODE_LENGTH):
             action1 = challenger.act(states[0], True)
             action2 = leader.act(states[1], True)
-            next_states, reward, done = env.step(action1, action2)
+            next_states, reward, done = env.step(action1, action2, True)
             episode_reward += reward
             states = next_states
 
@@ -154,7 +154,7 @@ def challenger_round():
                 episode_frames += 1
                 action1 = challenger.act(states[0])
                 action2 = leader.act(states[1])
-                next_states, reward, done = env.step(action1, action2)
+                next_states, reward, done = env.step(action1, action2, True)
                 episode_reward += reward
 
                 # NOTE: state and next_state are LazyFrames and must be

@@ -1,5 +1,6 @@
 import numpy as np
 import os
+from state import State
 from selenium import webdriver
 
 
@@ -33,7 +34,7 @@ class Instance(object):
             self._driver.get(self._url)
 
     # TODO: skip to every 4 frames
-    def step(self, action1, action2):
+    def step(self, action1, action2, render=False):
         """Takes an action, returns the next state.
 
         Args:
@@ -52,14 +53,13 @@ class Instance(object):
         # TODO: Max state over last observations
         for _ in xrange(4):
             response = self._driver.execute_script(
-                    'return step({}, {});'.format(
-                        action1.to_list(True), action2.to_list(False)))
+                    'return step({}, {}, {});'.format(
+                        action1.to_list(True), action2.to_list(False), int(render)))
             reward += response["reward"]
             if response["done"]:
                 break
-        next_states1 = response["player1"] + response["ball"] + response["player2"]
-        next_states2 = response["player2"] + response["ball"] + response["player1"]
-        return (next_states1, next_states2), reward, \
+        next_states = State(response)
+        return (next_states.p1_state, next_states.p2_state), reward, \
                 response["done"]
 
     def reset(self):
