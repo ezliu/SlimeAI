@@ -1,4 +1,5 @@
 import numpy as np
+import os
 from selenium import webdriver
 
 
@@ -14,8 +15,10 @@ class Instance(object):
             observation_mode (int): See ObservationMode
             headless (bool): True runs Chrome in headless mode
         """
-        self._url = ('file:///Users/brendongo/Desktop/CS231A/SlimeAI/'
-                     'CleanVolleyball.html')
+        if "SLIME_URL" not in os.environ:
+            assert False, "SLIME_URL" + " environmental variable must be set."
+        self._url = os.environ["SLIME_URL"]
+
         options = webdriver.ChromeOptions()
         if headless:
             options.add_argument('headless')
