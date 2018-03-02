@@ -2,7 +2,7 @@ var TWO_PI = Math.PI*2;
 var WIN_AMOUNT = 7;
 var RENDER_GLOBAL = false;
 
-function start(startAsOnePlayer) {
+function start(startAsOnePlayer, random) {
   onePlayer = startAsOnePlayer;
 
   slimeLeftScore = 0;
@@ -34,7 +34,7 @@ function start(startAsOnePlayer) {
     slimeAI          = null;
   }
 
-  starting = Math.random() >= 0.5;
+  starting = random >= 0.5;
   initRound(starting);
 
   updatesToPaint = 0;
@@ -129,8 +129,8 @@ function renderEndOfPoint() {
     (viewWidth - textWidth)/2, courtYPix + (viewHeight - courtYPix)/2);
 }
 
-function reset() {
-  start(false);
+function reset(random) {
+  start(false, random);
   return step([0,0,0],[0,0,0], false);
 }
 

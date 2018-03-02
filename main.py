@@ -6,7 +6,9 @@ from schedule import LinearSchedule
 from tqdm import tqdm
 from torch.nn.utils import clip_grad_norm
 import collections
+import numpy as np
 import os
+import random
 import torch.optim as optim
 import torch
 
@@ -15,17 +17,22 @@ import torch
 ######################################################
 # TODO: Move
 
-NUM_LEADERS = 5
+NUM_LEADERS = 1
 LEADER_DIR = "leaders"
 GRAVEYARD_DIR = "graveyard"
 SAVE_FREQ = 100000
-TRAIN_FRAMES = 500000
-EPISODES_EVALUATE_TRAIN = 10
+TRAIN_FRAMES = 1000000
+EPISODES_EVALUATE_TRAIN = 1
 EPISODES_EVALUATE_PURGE = 100
 MAX_EPISODE_LENGTH = 1000
 EPS_START = 1.
 EPS_END = 0.1
 OBSERVATION_MODE = ObservationMode.RAM
+SEED = 0
+
+random.seed(SEED)
+np.random.seed(SEED)
+torch.manual_seed(SEED)
 
 env = Instance(OBSERVATION_MODE)
 
