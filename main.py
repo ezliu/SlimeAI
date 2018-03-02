@@ -23,6 +23,8 @@ TRAIN_FRAMES = 500000
 EPISODES_EVALUATE_TRAIN = 10
 EPISODES_EVALUATE_PURGE = 100
 MAX_EPISODE_LENGTH = 1000
+EPS_START = 0.5
+EPS_END = 0.1
 OBSERVATION_MODE = ObservationMode.RAM
 
 env = Instance(OBSERVATION_MODE)
@@ -116,7 +118,7 @@ def challenger_round():
     leader_checkpoints = os.listdir(LEADER_DIR)
     challenger_parameters = []
     for i in xrange(NUM_LEADERS):
-        challenger = DQNAgent(6, LinearSchedule(1., 0.1, 500000))
+        challenger = DQNAgent(6, LinearSchedule(EPS_START, EPS_END, TRAIN_FRAMES))
         leader = DQNAgent(6, LinearSchedule(0.1, 0.1, 500000))
         if i < len(leader_checkpoints):
             leader_path = os.path.join(LEADER_DIR, leader_checkpoints[i])
