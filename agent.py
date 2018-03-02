@@ -84,6 +84,31 @@ class DQNAgent(nn.Module):
         self._target_Q.load_state_dict(self._Q.state_dict())
 
 
+class EnsembleDQNAgent(Agent):
+    """Set of DQNAgents. Each episode is rolled out with a random
+    agent. Updating updates each of the ensembles.
+    """
+    def __init__(self, dqn_agents):
+        super(EnsembleDQNAgent, self).__init__()
+        self._agents = dqn_agents
+        self._chosen_index = 0
+
+    def reset(self):
+        self._chosen_index = random.randint(0, len(self._agents) - 1)
+
+    def act(self, state, test=False):
+        return self._agents[self._chosen_index].act(state, test)
+
+    def update_from_experiences(self, experiences, take_grad_step):
+        for agent in self._agents:
+            agent.update_from_experiences(
+                    experiences, take_grad_step)
+
+    def sync_target(self):
+        for agent in self._agents:
+            agent.sync_target()
+
+
 class DQN(nn.Module):
     def __init__(self, num_actions, state_embedder):
         super(DQN, self).__init__()
