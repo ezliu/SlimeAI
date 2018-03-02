@@ -147,7 +147,7 @@ class DQN(nn.Module):
 class StateEmbedder(nn.Module):
     def __init__(self):
         super(StateEmbedder, self).__init__()
-        self._layer1 = nn.Linear(12, 128)
+        self._layer1 = nn.Linear(14, 128)
         self._layer2 = nn.Linear(128, 128)
         self._layer3 = nn.Linear(128, 128)
         self._layer4 = nn.Linear(128, 128)

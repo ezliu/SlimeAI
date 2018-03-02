@@ -133,7 +133,9 @@ function reset() {
   return step([0,0,0],[0,0,0]);
 }
 
-function step(player1Action, player2Action) {
+// player actons are boolean array for left, up, right movement
+// if render is true then renders in chrome
+function step(player1Action, player2Action, render) {
   keysDown = {};
 
   leftKey1 = player1Action[0];
@@ -150,7 +152,7 @@ function step(player1Action, player2Action) {
   keysDown[KEY_UP] = upKey2;
   keysDown[KEY_RIGHT] = rightKey2;
 
-  var reward = gameIteration();
+  var reward = gameIteration(render);
   var done = slimeLeftScore >= WIN_AMOUNT || slimeRightScore >= WIN_AMOUNT;
 
   return {
@@ -158,13 +160,15 @@ function step(player1Action, player2Action) {
       (slimeLeft.x - 500) / 500,
       slimeLeft.y / 705,
       slimeLeft.velocityX / 8,
-      slimeLeft.velocityY / 31
+      slimeLeft.velocityY / 31,
+      slimeLeftScore
     ],
     "player2": [
       (slimeRight.x - 500) / 500,
       slimeRight.y / 705,
       slimeRight.velocityX / 8,
-      slimeRight.velocityY / 31
+      slimeRight.velocityY / 31,
+      slimeRight
     ],
     "ball": [
       (ball.x - 500) / 500,
@@ -177,7 +181,7 @@ function step(player1Action, player2Action) {
   }
 }
 // returns true if end of point
-function gameIteration() {
+function gameIteration(render) {
   if(gameState == GAME_STATE_RUNNING) {
     updateCount++;
     // if(slowMotion && (updateCount % 2) == 0)
@@ -188,7 +192,7 @@ function gameIteration() {
 
     var reward = updateFrame();
     updatesToPaint++;
-    if(updatesToPaint == 1) {
+    if(render && updatesToPaint == 1) {
       requestAnimationFrame(renderGame);
     }
   }
