@@ -162,14 +162,14 @@ function step(player1Action, player2Action, render) {
       slimeLeft.y / 705,
       slimeLeft.velocityX / 8,
       slimeLeft.velocityY / 31,
-      slimeLeftScore
+      slimeLeftScore / 7
     ],
     "player2": [
       (slimeRight.x - 500) / 500,
       slimeRight.y / 705,
       slimeRight.velocityX / 8,
       slimeRight.velocityY / 31,
-      slimeRight
+      slimeRightScore / 7
     ],
     "ball": [
       (ball.x - 500) / 500,
