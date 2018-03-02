@@ -1,4 +1,4 @@
-from agent import DQNAgent, RandomAgent
+from agent import DQNAgent, RandomAgent, EnsembleDQNAgent
 from instance import Instance, ObservationMode
 from time import sleep
 from replay import ReplayBuffer, Experience
@@ -20,6 +20,9 @@ LEADER_DIR = "leaders"
 GRAVEYARD_DIR = "graveyard"
 SAVE_FREQ = 100000
 TRAIN_FRAMES = 500000
+EPISODES_EVALUATE_TRAIN = 10
+EPISODES_EVALUATE_PURGE = 100
+MAX_EPISODE_LENGTH = 1000
 OBSERVATION_MODE = ObservationMode.RAM
 
 env = Instance(OBSERVATION_MODE)
@@ -59,12 +62,12 @@ def evaluate(challenger, leader, num_episodes=10):
         num_episodes (int)
     """
     episode_rewards = []
-    for _ in xrange(num_episodes):
+    for _ in tqdm(xrange(num_episodes), desc="Evaluating"):
         episode_reward = 0.
         states = env.reset()
         challenger.reset()
         leader.reset()
-        while True:
+        for _ in xrange(MAX_EPISODE_LENGTH):
             action1 = challenger.act(states[0], True)
             action2 = leader.act(states[1], True)
             next_states, reward, done = env.step(action1, action2)
@@ -83,37 +86,52 @@ def purge_round():
     # Load in all of the leaders
     for leader_checkpoint in os.listdir(LEADER_DIR):
         path = os.path.join(LEADER_DIR, leader_checkpoint)
-        candidate_leader = DQNAgent(6, LinearSchedule(0.05, 0.05, 1))
+        candidate_leader = DQNAgent(
+                6, LinearSchedule(0.05, 0.05, 1), name=leader_checkpoint)
         candidate_leader.load_state_dict(torch.load(path))
         candidate_leaders_map[leader_checkpoint] = candidate_leader
 
     candidate_scores = []  # list[(filename, score)]
     filenames, candidate_leaders = zip(*candidate_leaders_map.items())
-    for i, (filename, candidate_leader) in enumerate(candidate_leaders):
+    for i, (filename, candidate_leader) in enumerate(
+            zip(filenames, candidate_leaders)):
+        print "EVALUATING {}".format(candidate_leader.name)
         leaders = EnsembleDQNAgent(
                 candidate_leaders[:i] + candidate_leaders[i + 1:])
-        candidate_scores.append((filename, evaluate(candidate_leader, leaders)))
+        candidate_scores.append(
+            (filename,
+             evaluate(candidate_leader, leaders, EPISODES_EVALUATE_PURGE)))
     sorted_scores = sorted(candidate_scores, key=lambda x:x[1])
 
     for filename, score in sorted_scores[NUM_LEADERS:]:
         print "PURGING ({}, {})".format(filename, score)
         leader_path = os.path.join(LEADER_DIR, filename)
         graveyard_path = os.path.join(GRAVEYARD_DIR, filename)
-        os.rename(path, graveyard_path)
+        os.rename(leader_path, graveyard_path)
 
 
 def challenger_round():
-    challenger = DQNAgent(6, LinearSchedule(1., 0.1, 500000))
-    leader = DQNAgent(6, LinearSchedule(0.1, 0.1, 500000))
+    challengers = []
+    leaders = []
     leader_checkpoints = os.listdir(LEADER_DIR)
-    if len(leader_checkpoints) > 0:
-        filename = os.path.join(LEADER_DIR, leader_checkpoints[0])
-        print "LOADING CHECKPOINT: {}".format(filename)
-        challenger.load_state_dict(torch.load(filename))
-        leader.load_state_dict(torch.load(filename))
-    optimizer = optim.Adam(challenger.parameters(), lr=0.00025)
-    challenger = EnsembleDQNAgent([challenger])
-    leader = EnsembleDQNAgent([leader])
+    challenger_parameters = []
+    for i in xrange(NUM_LEADERS):
+        challenger = DQNAgent(6, LinearSchedule(1., 0.1, 500000))
+        leader = DQNAgent(6, LinearSchedule(0.1, 0.1, 500000))
+        if i < len(leader_checkpoints):
+            leader_path = os.path.join(LEADER_DIR, leader_checkpoints[i])
+            print "LOADING CHECKPOINT: {}".format(leader_path)
+            challenger.load_state_dict(torch.load(leader_path))
+            leader.load_state_dict(torch.load(leader_path))
+        else:
+            print "INITIALIZING NEW CHALLENGER AND LEADER"
+        challenger_parameters += challenger.parameters()
+        challengers.append(challenger)
+        leaders.append(leader)
+
+    optimizer = optim.Adam(challenger_parameters, lr=0.00025)
+    challenger = EnsembleDQNAgent(challengers)
+    leader = EnsembleDQNAgent(leaders)
     replay_buffer = ReplayBuffer(1000000)
 
     rewards = collections.deque(maxlen=1000)
@@ -121,7 +139,7 @@ def challenger_round():
     episodes = 0  # number of training episodes that have been played
     with tqdm(total=TRAIN_FRAMES) as progress:
         # Each loop completes a single episode
-        while frames < 100000000:
+        while frames < TRAIN_FRAMES:
             states = env.reset()
             challenger.reset()
             leader.reset()
@@ -129,7 +147,7 @@ def challenger_round():
             episode_frames = 0
             # Each loop completes a single step, duplicates _evaluate() to
             # update at the appropriate frame #s
-            for _ in xrange(10000):
+            for _ in xrange(MAX_EPISODE_LENGTH):
                 frames += 1
                 episode_frames += 1
                 action1 = challenger.act(states[0])
@@ -140,7 +158,8 @@ def challenger_round():
                 # NOTE: state and next_state are LazyFrames and must be
                 # converted to np.arrays
                 replay_buffer.add(
-                    Experience(states[0], action1._action_index, reward, next_states[0], done))
+                    Experience(states[0], action1._action_index, reward,
+                               next_states[0], done))
                 states = next_states
 
                 if len(replay_buffer) > 50000 and \
@@ -152,14 +171,22 @@ def challenger_round():
                     challenger.sync_target()
 
                 if frames % SAVE_FREQ == 0:
-                    print "SAVING CHECKPOINT"
-                    torch.save(challenger.state_dict(), LEADER_DIR + "/test")
+                    # TODO: Don't access internals
+                    for agent in challenger._agents:
+                        path = os.path.join(
+                                LEADER_DIR, agent.name + "-{}".format(frames))
+                        print "SAVING CHECKPOINT TO: {}".format(path)
+                        torch.save(agent.state_dict(), path)
+
+                if frames >= TRAIN_FRAMES:
+                    break
 
                 if done:
                     break
 
             if episodes % 100 == 0:
-                print "Evaluation: {}".format(evaluate(challenger, leader, 5))
+                print "Evaluation: {}".format(
+                        evaluate(challenger, leader, EPISODES_EVALUATE_TRAIN))
             print "Episode reward: {}".format(episode_reward)
             episodes += 1
             rewards.append(episode_reward)
@@ -171,4 +198,6 @@ def challenger_round():
             progress.update(episode_frames)
             episode_frames = 0
 
-challenger_round()
+while True:
+    challenger_round()
+    purge_round()
