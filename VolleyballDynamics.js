@@ -131,7 +131,7 @@ function renderEndOfPoint() {
 
 function reset() {
   start(false);
-  return step([0,0,0],[0,0,0]);
+  return step([0,0,0],[0,0,0], false);
 }
 
 // player actons are boolean array for left, up, right movement
