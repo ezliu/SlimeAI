@@ -1,6 +1,7 @@
 import abc
 import numpy as np
 import random
+import string
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -10,6 +11,15 @@ from utils import GPUVariable
 
 class Agent(nn.Module):
     __metaclass__ = abc.ABCMeta
+
+    def __init__(self, name=None):
+        super(Agent, self).__init__()
+        if name is None:
+            self._name = ''.join(
+                random.choice(string.ascii_uppercase + string.digits)
+                for _ in range(10))
+        else:
+            self._name = name
 
     @abc.abstractmethod
     def act(self, state, test=False):
@@ -24,19 +34,26 @@ class Agent(nn.Module):
         """
         raise NotImplementedError()
 
+    @property
+    def name(self):
+        return self._name
+
+    def reset(self):
+        pass
+
 
 class RandomAgent(Agent):
-    def __init__(self, num_actions):
-        super(RandomAgent, self).__init__()
+    def __init__(self, num_actions, name=None):
+        super(RandomAgent, self).__init__(name)
         self._num_actions = num_actions
 
     def act(self, state, test=False):
         return Action(random.randint(0, self._num_actions - 1))
 
 
-class DQNAgent(nn.Module):
-    def __init__(self, num_actions, epsilon_schedule):
-        super(DQNAgent, self).__init__()
+class DQNAgent(Agent):
+    def __init__(self, num_actions, epsilon_schedule, name=None):
+        super(DQNAgent, self).__init__(name)
         self._Q = DQN(num_actions, StateEmbedder())
         self._target_Q = DQN(num_actions, StateEmbedder())
         self._epsilon_schedule = epsilon_schedule
