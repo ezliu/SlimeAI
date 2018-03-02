@@ -12,11 +12,12 @@ class Agent(nn.Module):
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
-    def act(self, state):
+    def act(self, state, test=False):
         """Takes a single state and returns an action to play in that state.
 
         Args:
             state (np.array)
+            test (bool): True in test mode
 
         Returns:
             int
@@ -29,7 +30,7 @@ class RandomAgent(Agent):
         super(RandomAgent, self).__init__()
         self._num_actions = num_actions
 
-    def act(self, state):
+    def act(self, state, test=False):
         return Action(random.randint(0, self._num_actions - 1))
 
 
@@ -40,10 +41,12 @@ class DQNAgent(nn.Module):
         self._target_Q = DQN(num_actions, StateEmbedder())
         self._epsilon_schedule = epsilon_schedule
 
-    def act(self, state):
+    def act(self, state, test=False):
         state = GPUVariable(torch.FloatTensor(np.expand_dims(state, 0)))
         q_values = self._Q(state)
         epsilon = self._epsilon_schedule.get_epsilon()
+        if test:
+            epsilon = 0.05
         return Action(epsilon_greedy(q_values, epsilon)[0])
 
     def update_from_experiences(self, experiences, take_grad_step):
