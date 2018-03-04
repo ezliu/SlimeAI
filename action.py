@@ -38,9 +38,11 @@ class Action(object):
 
         # Convert to p2 reference
         if not first_player:
-            left = keylist[2]
-            keylist[2] = keylist[0]
-            keylist[0] = left
+            copy = list(keylist)
+            left = copy[2]
+            copy[2] = copy[0]
+            copy[0] = left
+            return copy
         return keylist
 
     def __str__(self):
