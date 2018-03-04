@@ -21,11 +21,11 @@ GRAD_CLIP_NORM = 10.
 LEADER_DIR = "leaders"
 GRAVEYARD_DIR = "graveyard"
 SAVE_FREQ = 100000
-TRAIN_FRAMES = 1000000
+TRAIN_FRAMES = 750000
 EPISODES_EVALUATE_TRAIN = 10
 EPISODES_EVALUATE_PURGE = 100
 MAX_EPISODE_LENGTH = 1000
-EPS_START = 1.
+EPS_START = 0.75
 EPS_END = 0.1
 LR = 0.00025
 OBSERVATION_MODE = ObservationMode.RAM
@@ -118,7 +118,12 @@ def challenger_round():
     challenger = DQNAgent(
             6, LinearSchedule(EPS_START, EPS_END, TRAIN_FRAMES),
             lr=LR, max_grad_norm=GRAD_CLIP_NORM)
-    leader = RandomAgent(6)
+    leader = DQNAgent(6, LinearSchedule(0.1, 0.1, 500000))
+    leader_checkpoints = os.listdir(LEADER_DIR)
+    leader_path = os.path.join(LEADER_DIR, leader_checkpoints[0])
+    print "LOADING CHECKPOINT: {}".format(leader_path)
+    challenger.load_state_dict(torch.load(leader_path))
+    leader.load_state_dict(torch.load(leader_path))
     #challenger = EnsembleDQNAgent(challengers)
     #leader = EnsembleDQNAgent(leaders)
     replay_buffer = ReplayBuffer(1000000)
