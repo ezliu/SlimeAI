@@ -4,7 +4,6 @@ from time import sleep
 from replay import ReplayBuffer, Experience
 from schedule import LinearSchedule
 from tqdm import tqdm
-from torch.nn.utils import clip_grad_norm
 import collections
 import numpy as np
 import os
@@ -18,15 +17,17 @@ import torch
 # TODO: Move
 
 NUM_LEADERS = 1
+GRAD_CLIP_NORM = 10.
 LEADER_DIR = "leaders"
 GRAVEYARD_DIR = "graveyard"
 SAVE_FREQ = 100000
 TRAIN_FRAMES = 1000000
-EPISODES_EVALUATE_TRAIN = 1
+EPISODES_EVALUATE_TRAIN = 10
 EPISODES_EVALUATE_PURGE = 100
 MAX_EPISODE_LENGTH = 1000
 EPS_START = 1.
 EPS_END = 0.1
+LR = 0.00025
 OBSERVATION_MODE = ObservationMode.RAM
 SEED = 0
 
@@ -71,7 +72,7 @@ def purge_round():
     for leader_checkpoint in os.listdir(LEADER_DIR):
         path = os.path.join(LEADER_DIR, leader_checkpoint)
         candidate_leader = DQNAgent(
-                6, LinearSchedule(0.05, 0.05, 1), name=leader_checkpoint)
+                6, LinearSchedule(0.05, 0.05, 1), lr=LR, max_grad_norm=GRAD_CLIP_NORM, name=leader_checkpoint)
         candidate_leader.load_state_dict(torch.load(path))
         candidate_leaders_map[leader_checkpoint] = candidate_leader
 
@@ -95,54 +96,32 @@ def purge_round():
 
 
 def challenger_round():
-    challengers = []
-    leaders = []
-    leader_checkpoints = os.listdir(LEADER_DIR)
-    challenger_parameters = []
-    for i in xrange(NUM_LEADERS):
-        challenger = DQNAgent(6, LinearSchedule(EPS_START, EPS_END, TRAIN_FRAMES))
-        if i < len(leader_checkpoints):
-            leader = DQNAgent(6, LinearSchedule(0.1, 0.1, 500000))
-            leader_path = os.path.join(LEADER_DIR, leader_checkpoints[i])
-            print "LOADING CHECKPOINT: {}".format(leader_path)
-            challenger.load_state_dict(torch.load(leader_path))
-            leader.load_state_dict(torch.load(leader_path))
-        else:
-            leader = RandomAgent(6)
-            print "INITIALIZING NEW CHALLENGER AND LEADER"
-        challenger_parameters += challenger.parameters()
-        challengers.append(challenger)
-        leaders.append(leader)
+    #challengers = []
+    #leaders = []
+    #leader_checkpoints = os.listdir(LEADER_DIR)
+    #challenger_parameters = []
+    #for i in xrange(NUM_LEADERS):
+    #    challenger = DQNAgent(6, LinearSchedule(EPS_START, EPS_END, TRAIN_FRAMES))
+    #    if i < len(leader_checkpoints):
+    #        leader = DQNAgent(6, LinearSchedule(0.1, 0.1, 500000))
+    #        leader_path = os.path.join(LEADER_DIR, leader_checkpoints[i])
+    #        print "LOADING CHECKPOINT: {}".format(leader_path)
+    #        challenger.load_state_dict(torch.load(leader_path))
+    #        leader.load_state_dict(torch.load(leader_path))
+    #    else:
+    #        leader = RandomAgent(6)
+    #        print "INITIALIZING NEW CHALLENGER AND LEADER"
+    #    challenger_parameters += challenger.parameters()
+    #    challengers.append(challenger)
+    #    leaders.append(leader)
 
-    optimizer = optim.Adam(challenger_parameters, lr=0.00025)
-    challenger = EnsembleDQNAgent(challengers)
-    leader = EnsembleDQNAgent(leaders)
+    challenger = DQNAgent(
+            6, LinearSchedule(EPS_START, EPS_END, TRAIN_FRAMES),
+            lr=LR, max_grad_norm=GRAD_CLIP_NORM)
+    leader = RandomAgent(6)
+    #challenger = EnsembleDQNAgent(challengers)
+    #leader = EnsembleDQNAgent(leaders)
     replay_buffer = ReplayBuffer(1000000)
-
-    def take_grad_step(model, loss, max_grad_norm=float('inf')):
-        """Try to take a gradient step w.r.t. loss.
-
-        If the gradient is finite, takes a step. Otherwise, does nothing.
-
-        Args:
-            loss (Variable): a differentiable scalar variable
-            max_grad_norm (float): gradient norm is clipped to this value.
-
-        Returns:
-            finite_grads (bool): True if the gradient was finite.
-            grad_norm (float): norm of the gradient (BEFORE clipping)
-        """
-        optimizer.zero_grad()
-        loss.backward()
-
-        # clip according to the max allowed grad norm
-        grad_norm = clip_grad_norm(model.parameters(), max_grad_norm, norm_type=2)
-        # (this returns the gradient norm BEFORE clipping)
-
-        optimizer.step()
-
-        return grad_norm
-
     rewards = collections.deque(maxlen=1000)
     frames = 0  # number of training frames seen
     episodes = 0  # number of training episodes that have been played
@@ -174,18 +153,21 @@ def challenger_round():
                 if len(replay_buffer) > 50000 and \
                         frames % 4 == 0:
                     experiences = replay_buffer.sample(32)
-                    challenger.update_from_experiences(experiences, take_grad_step)
+                    challenger.update_from_experiences(experiences)
 
                 if frames % 10000 == 0:
                     challenger.sync_target()
 
                 if frames % SAVE_FREQ == 0:
                     # TODO: Don't access internals
-                    for agent in challenger._agents:
-                        path = os.path.join(
-                                LEADER_DIR, agent.name + "-{}".format(frames))
-                        print "SAVING CHECKPOINT TO: {}".format(path)
-                        torch.save(agent.state_dict(), path)
+                    #for agent in challenger._agents:
+                    #    path = os.path.join(
+                    #            LEADER_DIR, agent.name + "-{}".format(frames))
+                    #    print "SAVING CHECKPOINT TO: {}".format(path)
+                    #    torch.save(agent.state_dict(), path)
+                    path = os.path.join(
+                            LEADER_DIR, challenger.name + "-{}".format(frames))
+                    torch.save(challenger.state_dict(), path)
 
                 if frames >= TRAIN_FRAMES:
                     break
@@ -199,7 +181,7 @@ def challenger_round():
             print "Episode reward: {}".format(episode_reward)
             episodes += 1
             rewards.append(episode_reward)
-            stats = {}
+            stats = challenger.stats
             stats["Avg Episode Reward"] = float(sum(rewards)) / len(rewards)
             stats["Num Episodes"] = episodes
             stats["Replay Buffer Size"] = len(replay_buffer)

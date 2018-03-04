@@ -1,11 +1,14 @@
 import abc
+import collections
 import numpy as np
 import random
 import string
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torch.optim as optim
 from action import Action
+from torch.nn.utils import clip_grad_norm
 from utils import GPUVariable
 
 
@@ -38,6 +41,10 @@ class Agent(nn.Module):
     def name(self):
         return self._name
 
+    @property
+    def stats(self):
+        return {}
+
     def reset(self):
         pass
 
@@ -52,21 +59,32 @@ class RandomAgent(Agent):
 
 
 class DQNAgent(Agent):
-    def __init__(self, num_actions, epsilon_schedule, name=None):
+    def __init__(self, num_actions, epsilon_schedule, lr=0.00025, max_grad_norm=10., name=None):
         super(DQNAgent, self).__init__(name)
         self._Q = DQN(num_actions, StateEmbedder())
         self._target_Q = DQN(num_actions, StateEmbedder())
         self._epsilon_schedule = epsilon_schedule
+        self._epsilon = 1.
+        self._max_q = collections.deque(maxlen=1000)
+        self._min_q = collections.deque(maxlen=1000)
+        self._avg_loss = collections.deque(maxlen=1000)
+        self._avg_loss.append(0.)
+        self._optimizer = optim.Adam(self._Q.parameters(), lr=lr)
+        self._grad_clip_norm = max_grad_norm
 
     def act(self, state, test=False):
         state = GPUVariable(torch.FloatTensor(np.expand_dims(state, 0)))
         q_values = self._Q(state)
-        epsilon = self._epsilon_schedule.get_epsilon()
         if test:
             epsilon = 0.05
+        else:
+            epsilon = self._epsilon_schedule.get_epsilon()
+        self._epsilon = epsilon
+        self._max_q.append(torch.max(q_values).cpu().data.numpy())
+        self._min_q.append(torch.min(q_values).cpu().data.numpy())
         return Action(epsilon_greedy(q_values, epsilon)[0])
 
-    def update_from_experiences(self, experiences, take_grad_step):
+    def update_from_experiences(self, experiences):
         gamma = 0.99  # TODO: Fix this
 
         batch_size = len(experiences)
@@ -94,12 +112,46 @@ class DQNAgent(Agent):
         targets.detach_()  # Don't backprop through targets
 
         loss_fn = nn.MSELoss()
-        take_grad_step(self._Q, loss_fn(current_state_q_values, targets))
+        loss = loss_fn(current_state_q_values, targets)
+        self._avg_loss.append(loss.cpu().data.numpy())
+        self._take_grad_step(loss)
+
+    def _take_grad_step(self, loss):
+        """Try to take a gradient step w.r.t. loss.
+
+        If the gradient is finite, takes a step. Otherwise, does nothing.
+
+        Args:
+            loss (Variable): a differentiable scalar variable
+            max_grad_norm (float): gradient norm is clipped to this value.
+
+        Returns:
+            finite_grads (bool): True if the gradient was finite.
+            grad_norm (float): norm of the gradient (BEFORE clipping)
+        """
+        self._optimizer.zero_grad()
+        loss.backward()
+
+        # clip according to the max allowed grad norm
+        grad_norm = clip_grad_norm(
+                self.parameters(), self._grad_clip_norm, norm_type=2)
+        # (this returns the gradient norm BEFORE clipping)
+
+        self._optimizer.step()
+
+        return grad_norm
+
 
     def sync_target(self):
         """Syncs the target Q values with the current Q values"""
         self._target_Q.load_state_dict(self._Q.state_dict())
 
+    @property
+    def stats(self):
+        return {"Epsilon": self._epsilon,
+                "Max Q": sum(self._max_q) / len(self._max_q),
+                "Min Q": sum(self._min_q) / len(self._min_q),
+                "Avg Loss": sum(self._avg_loss) / len(self._avg_loss)}
 
 class EnsembleDQNAgent(Agent):
     """Set of DQNAgents. Each episode is rolled out with a random
@@ -116,10 +168,9 @@ class EnsembleDQNAgent(Agent):
     def act(self, state, test=False):
         return self._agents[self._chosen_index].act(state, test)
 
-    def update_from_experiences(self, experiences, take_grad_step):
+    def update_from_experiences(self, experiences):
         for agent in self._agents:
-            agent.update_from_experiences(
-                    experiences, take_grad_step)
+            agent.update_from_experiences(experiences)
 
     def sync_target(self):
         for agent in self._agents:
