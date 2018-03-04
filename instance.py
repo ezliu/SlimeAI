@@ -59,12 +59,12 @@ class Instance(object):
             reward += response["reward"]
             if response["done"]:
                 break
-        #next_states = State(response)
-        next_states1 = response["player1"] + response["ball"] + response["player2"]
-        next_states2 = response["player2"] + response["ball"] + response["player1"]
+        next_states = State(response)
+        #next_states1 = response["player1"] + response["ball"] + response["player2"]
+        #next_states2 = response["player2"] + response["ball"] + response["player1"]
         #print next_states.p1_state
         #print next_states.p2_state
-        return (next_states1, next_states2), reward, \
+        return (next_states.p1_state, next_states.p2_state), reward, \
                 response["done"]
 
     def reset(self):
@@ -75,6 +75,7 @@ class Instance(object):
         """
         response = self._driver.execute_script('return reset({});'.format(
             random.random()))
-        next_states1 = response["player1"] + response["ball"] + response["player2"]
-        next_states2 = response["player2"] + response["ball"] + response["player1"]
-        return (next_states1, next_states2)
+        next_states = State(response)
+        #next_states1 = response["player1"] + response["ball"] + response["player2"]
+        #next_states2 = response["player2"] + response["ball"] + response["player1"]
+        return (next_states.p1_state, next_states.p2_state)
