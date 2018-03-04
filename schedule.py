@@ -18,5 +18,5 @@ class LinearSchedule(object):
             float
         """
         step_size = float(self._eps_begin - self._eps_end) / self._total_steps
-        self._epsilon = max(self._eps_end, self._eps_begin - step_size)
+        self._epsilon = max(self._eps_end, self._epsilon - step_size)
         return self._epsilon
