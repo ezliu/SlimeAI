@@ -106,9 +106,9 @@ function renderGame() {
   if(updatesToPaint == 0) {
     console.log("ERROR: render called but not ready to paint");
   } else {
-    if(updatesToPaint > 1) {
-      console.log("WARNING: render missed " + (updatesToPaint - 1) + " frame(s)");
-    }
+    //if(updatesToPaint > 1) {
+    //  console.log("WARNING: render missed " + (updatesToPaint - 1) + " frame(s)");
+    //}
     renderBackground();
     ctx.fillStyle = '#000';
     //ctx.font = "20px Georgia";
@@ -137,21 +137,28 @@ function reset(random) {
 // player actons are boolean array for left, up, right movement
 // if render is true then renders in chrome
 function step(player1Action, player2Action, render) {
-  keysDown = {};
+  //keysDown = {};
 
-  leftKey1 = player1Action[0];
-  upKey1 = player1Action[1];
-  rightKey1 = player1Action[2];
-  keysDown[KEY_A] = leftKey1;
-  keysDown[KEY_W] = upKey1;
-  keysDown[KEY_D] = rightKey1;
+  //console.log("Action 1: " + player1Action);
+  if (player1Action !== null) {
+    leftKey1 = player1Action[0];
+    upKey1 = player1Action[1];
+    rightKey1 = player1Action[2];
+    keysDown[KEY_A] = leftKey1;
+    keysDown[KEY_W] = upKey1;
+    keysDown[KEY_D] = rightKey1;
+  }
 
-  leftKey2 = player2Action[0];
-  upKey2 = player2Action[1];
-  rightKey2 = player2Action[2];
-  keysDown[KEY_LEFT] = leftKey2;
-  keysDown[KEY_UP] = upKey2;
-  keysDown[KEY_RIGHT] = rightKey2;
+  if (player2Action !== null) {
+    leftKey2 = player2Action[0];
+    upKey2 = player2Action[1];
+    rightKey2 = player2Action[2];
+    keysDown[KEY_LEFT] = leftKey2;
+    keysDown[KEY_UP] = upKey2;
+    keysDown[KEY_RIGHT] = rightKey2;
+  }
+
+  //console.log(keysDown);
 
   var reward = gameIteration(render);
   var done = slimeLeftScore >= WIN_AMOUNT || slimeRightScore >= WIN_AMOUNT;
@@ -187,9 +194,9 @@ function gameIteration(render) {
     updateCount++;
     // if(slowMotion && (updateCount % 2) == 0)
       // return;
-    if(updatesToPaint > 0) {
-      console.log("WARNING: updating frame before it was rendered");
-    }
+    //if(updatesToPaint > 0) {
+    //  console.log("WARNING: updating frame before it was rendered");
+    //}
 
     var reward = updateFrame();
     updatesToPaint++;

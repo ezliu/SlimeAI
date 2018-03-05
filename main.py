@@ -1,4 +1,4 @@
-from agent import DQNAgent, RandomAgent, EnsembleDQNAgent
+from agent import DQNAgent, RandomAgent, EnsembleDQNAgent, HumanAgent
 from instance import Instance, ObservationMode
 from time import sleep
 from replay import ReplayBuffer, Experience
@@ -21,15 +21,15 @@ GRAD_CLIP_NORM = 10.
 LEADER_DIR = "leaders"
 GRAVEYARD_DIR = "graveyard"
 SAVE_FREQ = 100000
-TRAIN_FRAMES = 750000
-EPISODES_EVALUATE_TRAIN = 10
+TRAIN_FRAMES = 500000
+EPISODES_EVALUATE_TRAIN = 1
 EPISODES_EVALUATE_PURGE = 100
 MAX_EPISODE_LENGTH = 1000
-EPS_START = 0.75
+EPS_START = 0.5
 EPS_END = 0.1
 LR = 0.00025
 OBSERVATION_MODE = ObservationMode.RAM
-SEED = 0
+SEED = 1
 
 random.seed(SEED)
 np.random.seed(SEED)
@@ -115,14 +115,15 @@ def challenger_round():
     #    challengers.append(challenger)
     #    leaders.append(leader)
 
-    challenger = DQNAgent(
-            6, LinearSchedule(EPS_START, EPS_END, TRAIN_FRAMES),
-            lr=LR, max_grad_norm=GRAD_CLIP_NORM)
+    challenger = HumanAgent(6)
+    #challenger = DQNAgent(
+    #        6, LinearSchedule(EPS_START, EPS_END, TRAIN_FRAMES),
+    #        lr=LR, max_grad_norm=GRAD_CLIP_NORM)
     leader = DQNAgent(6, LinearSchedule(0.1, 0.1, 500000))
     leader_checkpoints = os.listdir(LEADER_DIR)
     leader_path = os.path.join(LEADER_DIR, leader_checkpoints[0])
     print "LOADING CHECKPOINT: {}".format(leader_path)
-    challenger.load_state_dict(torch.load(leader_path))
+    #challenger.load_state_dict(torch.load(leader_path))
     leader.load_state_dict(torch.load(leader_path))
     #challenger = EnsembleDQNAgent(challengers)
     #leader = EnsembleDQNAgent(leaders)
@@ -134,6 +135,7 @@ def challenger_round():
         # Each loop completes a single episode
         while frames < TRAIN_FRAMES:
             states = env.reset()
+            #sleep(0.5)
             challenger.reset()
             leader.reset()
             episode_reward = 0.
@@ -146,6 +148,7 @@ def challenger_round():
                 action1 = challenger.act(states[0])
                 action2 = leader.act(states[1])
                 next_states, reward, done = env.step(action1, action2)
+                sleep(0.02)
                 episode_reward += reward
 
                 # NOTE: state and next_state are LazyFrames and must be
