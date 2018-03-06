@@ -50,7 +50,7 @@ function asyncStep() {
   action1 = [keysDown[KEY_A], keysDown[KEY_W], keysDown[KEY_D]];
   action2 = [keysDown[KEY_LEFT], keysDown[KEY_UP], keysDown[KEY_RIGHT]];
   keysDown = {};
-  step(action1, action2);
+  step(action1, action2, false, 1);
 }
 
 function renderBackground() {
@@ -131,30 +131,37 @@ function renderEndOfPoint() {
 
 function reset(random) {
   start(false, random);
-  return step([0,0,0],[0,0,0], false);
+  return step([0,0,0],[0,0,0], false, 1);
 }
 
 // player actons are boolean array for left, up, right movement
 // if render is true then renders in chrome
-function step(player1Action, player2Action, render) {
-  keysDown = {};
+function step(player1Action, player2Action, render, numFrames) {
+  var reward = 0;
+  var done = false;
+  for (var i = 0; i < numFrames; i++) {
+    keysDown = {};
 
-  leftKey1 = player1Action[0];
-  upKey1 = player1Action[1];
-  rightKey1 = player1Action[2];
-  keysDown[KEY_A] = leftKey1;
-  keysDown[KEY_W] = upKey1;
-  keysDown[KEY_D] = rightKey1;
+    leftKey1 = player1Action[0];
+    upKey1 = player1Action[1];
+    rightKey1 = player1Action[2];
+    keysDown[KEY_A] = leftKey1;
+    keysDown[KEY_W] = upKey1;
+    keysDown[KEY_D] = rightKey1;
 
-  leftKey2 = player2Action[0];
-  upKey2 = player2Action[1];
-  rightKey2 = player2Action[2];
-  keysDown[KEY_LEFT] = leftKey2;
-  keysDown[KEY_UP] = upKey2;
-  keysDown[KEY_RIGHT] = rightKey2;
+    leftKey2 = player2Action[0];
+    upKey2 = player2Action[1];
+    rightKey2 = player2Action[2];
+    keysDown[KEY_LEFT] = leftKey2;
+    keysDown[KEY_UP] = upKey2;
+    keysDown[KEY_RIGHT] = rightKey2;
 
-  var reward = gameIteration(render);
-  var done = slimeLeftScore >= WIN_AMOUNT || slimeRightScore >= WIN_AMOUNT;
+    reward += gameIteration(render);
+    done = slimeLeftScore >= WIN_AMOUNT || slimeRightScore >= WIN_AMOUNT;
+    if (done) {
+      break;
+    }
+  }
 
   return {
     "player1": [

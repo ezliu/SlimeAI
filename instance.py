@@ -50,21 +50,16 @@ class Instance(object):
                 (reward for player 2 = -reward for player 1)
             done (bool): True if the episode is over
         """
-        reward = 0.
         # TODO: Max state over last observations
-        for _ in xrange(4):
-            response = self._driver.execute_script(
-                    'return step({}, {}, {});'.format(
-                        action1.to_list(True), action2.to_list(False), int(render)))
-            reward += response["reward"]
-            if response["done"]:
-                break
+        response = self._driver.execute_script(
+                'return step({}, {}, {}, 4);'.format(
+                    action1.to_list(True), action2.to_list(False), int(render)))
         next_states = State(response)
         #next_states1 = response["player1"] + response["ball"] + response["player2"]
         #next_states2 = response["player2"] + response["ball"] + response["player1"]
         #print next_states.p1_state
         #print next_states.p2_state
-        return (next_states.p1_state, next_states.p2_state), reward, \
+        return (next_states.p1_state, next_states.p2_state), response["reward"], \
                 response["done"]
 
     def reset(self):
