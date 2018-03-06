@@ -86,8 +86,9 @@ def purge_round():
         candidate_scores.append(
             (filename,
              evaluate(candidate_leader, leaders, EPISODES_EVALUATE_PURGE)))
-    sorted_scores = sorted(candidate_scores, key=lambda x:x[1])
+    sorted_scores = sorted(candidate_scores, key=lambda x:x[1], reverse=True)
 
+    print "SCORES: {}".format(sorted_scores)
     for filename, score in sorted_scores[NUM_LEADERS:]:
         print "PURGING ({}, {})".format(filename, score)
         leader_path = os.path.join(LEADER_DIR, filename)
