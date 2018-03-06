@@ -97,36 +97,29 @@ def purge_round():
 
 
 def challenger_round():
-    #challengers = []
-    #leaders = []
-    #leader_checkpoints = os.listdir(LEADER_DIR)
-    #challenger_parameters = []
-    #for i in xrange(NUM_LEADERS):
-    #    challenger = DQNAgent(6, LinearSchedule(EPS_START, EPS_END, TRAIN_FRAMES))
-    #    if i < len(leader_checkpoints):
-    #        leader = DQNAgent(6, LinearSchedule(0.1, 0.1, 500000))
-    #        leader_path = os.path.join(LEADER_DIR, leader_checkpoints[i])
-    #        print "LOADING CHECKPOINT: {}".format(leader_path)
-    #        challenger.load_state_dict(torch.load(leader_path))
-    #        leader.load_state_dict(torch.load(leader_path))
-    #    else:
-    #        leader = RandomAgent(6)
-    #        print "INITIALIZING NEW CHALLENGER AND LEADER"
-    #    challenger_parameters += challenger.parameters()
-    #    challengers.append(challenger)
-    #    leaders.append(leader)
-
-    challenger = DQNAgent(
-            6, LinearSchedule(EPS_START, EPS_END, TRAIN_FRAMES),
-            lr=LR, max_grad_norm=GRAD_CLIP_NORM)
-    leader = DQNAgent(6, LinearSchedule(0.1, 0.1, 500000))
+    challengers = []
+    leaders = []
     leader_checkpoints = os.listdir(LEADER_DIR)
-    leader_path = os.path.join(LEADER_DIR, leader_checkpoints[0])
-    print "LOADING CHECKPOINT: {}".format(leader_path)
-    challenger.load_state_dict(torch.load(leader_path))
-    leader.load_state_dict(torch.load(leader_path))
-    #challenger = EnsembleDQNAgent(challengers)
-    #leader = EnsembleDQNAgent(leaders)
+    # Need to share the same schedule with all challengers, so they all anneal
+    # at same rate
+    epsilon_schedule = LinearSchedule(EPS_START, EPS_END, TRAIN_FRAMES)
+    for i in xrange(NUM_LEADERS):
+        challenger = DQNAgent(
+                6, epsilon_schedule, lr=LR, max_grad_norm=GRAD_CLIP_NORM)
+        if i < len(leader_checkpoints):
+            leader = DQNAgent(6, LinearSchedule(0.1, 0.1, 500000))
+            leader_path = os.path.join(LEADER_DIR, leader_checkpoints[i])
+            print "LOADING CHECKPOINT: {}".format(leader_path)
+            challenger.load_state_dict(torch.load(leader_path))
+            leader.load_state_dict(torch.load(leader_path))
+        else:
+            leader = RandomAgent(6)
+            print "INITIALIZING NEW CHALLENGER AND LEADER"
+        challengers.append(challenger)
+        leaders.append(leader)
+
+    challenger = EnsembleDQNAgent(challengers)
+    leader = EnsembleDQNAgent(leaders)
     replay_buffer = ReplayBuffer(1000000)
     rewards = collections.deque(maxlen=1000)
     frames = 0  # number of training frames seen
@@ -166,14 +159,14 @@ def challenger_round():
 
                 if frames % SAVE_FREQ == 0:
                     # TODO: Don't access internals
-                    #for agent in challenger._agents:
-                    #    path = os.path.join(
-                    #            LEADER_DIR, agent.name + "-{}".format(frames))
-                    #    print "SAVING CHECKPOINT TO: {}".format(path)
-                    #    torch.save(agent.state_dict(), path)
-                    path = os.path.join(
-                            LEADER_DIR, challenger.name + "-{}".format(frames))
-                    torch.save(challenger.state_dict(), path)
+                    for agent in challenger._agents:
+                        path = os.path.join(
+                                LEADER_DIR, agent.name + "-{}".format(frames))
+                        print "SAVING CHECKPOINT TO: {}".format(path)
+                        torch.save(agent.state_dict(), path)
+                    #path = os.path.join(
+                    #        LEADER_DIR, challenger.name + "-{}".format(frames))
+                    #torch.save(challenger.state_dict(), path)
 
                 if frames >= TRAIN_FRAMES:
                     break
@@ -198,3 +191,4 @@ def challenger_round():
 while True:
     challenger_round()
     purge_round()
+    SEED += 1
