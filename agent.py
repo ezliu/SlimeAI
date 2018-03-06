@@ -176,6 +176,13 @@ class EnsembleDQNAgent(Agent):
         for agent in self._agents:
             agent.sync_target()
 
+    @property
+    def stats(self):
+        stats = {}
+        for k in self._agents[0].stats.iterkeys():
+            stats[k] = sum(agent.stats[k] for agent in self._agents) / len(self._agents)
+        return stats
+
 
 class DQN(nn.Module):
     def __init__(self, num_actions, state_embedder):
