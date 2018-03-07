@@ -35,17 +35,15 @@ random.seed(SEED)
 np.random.seed(SEED)
 torch.manual_seed(SEED)
 
-env = Instance(OBSERVATION_MODE)
-
 def challenger_round():
-    challenger = JavaScriptAgent(6)
+    right = JavaScriptAgent(6)
 
-    leader = DQNAgent(6, LinearSchedule(0.0001, 0.0001, 500000))
+    left = DQNAgent(6, LinearSchedule(0.0001, 0.0001, 500000))
     leader_checkpoints = os.listdir(LEADER_DIR)
     leader_path = os.path.join(LEADER_DIR, leader_checkpoints[0])
     print "LOADING CHECKPOINT: {}".format(leader_path)
 
-    leader.load_state_dict(torch.load(leader_path))
+    left.load_state_dict(torch.load(leader_path))
 
     replay_buffer = ReplayBuffer(1000000)
     rewards = collections.deque(maxlen=1000)
@@ -55,10 +53,10 @@ def challenger_round():
     with tqdm(total=TRAIN_FRAMES) as progress:
         # Each loop completes a single episode
         while frames < TRAIN_FRAMES:
-            states = env.reset(OPPONENT)
+            states = env.reset()
             # sleep(0.5)
-            challenger.reset()
-            leader.reset()
+            right.reset()
+            left.reset()
             episode_reward = 0.
             episode_frames = 0
             # Each loop completes a single step, duplicates _evaluate() to
@@ -66,8 +64,8 @@ def challenger_round():
             for _ in xrange(MAX_EPISODE_LENGTH):
                 frames += 1
                 episode_frames += 1
-                action1 = leader.act(states[1])
-                action2 = challenger.act(states[0])
+                action1 = left.act(states[0])
+                action2 = right.act(states[1])
                 next_states, reward, done = env.step(action1, action2)
                 sleep(0.1)
                 episode_reward += reward
@@ -86,7 +84,7 @@ def challenger_round():
             print "Episode reward: {}".format(episode_reward)
             episodes += 1
             rewards.append(episode_reward)
-            stats = challenger.stats
+            stats = left.stats
             stats["Avg Episode Reward"] = float(sum(rewards)) / len(rewards)
             stats["Num Episodes"] = episodes
             stats["Replay Buffer Size"] = len(replay_buffer)
@@ -101,6 +99,7 @@ if len(sys.argv) != 2:
     print "2 for Easy Hard Coded AI"
     print "3 for Easy Hard Coded AI"
 OPPONENT = int(sys.argv[1])
+env = Instance(OBSERVATION_MODE, onePlayer=1, opponent=OPPONENT)
 
 while True:
     challenger_round()

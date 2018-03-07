@@ -1,16 +1,18 @@
 var TWO_PI = Math.PI*2;
 var WIN_AMOUNT = 7;
 var RENDER_GLOBAL = false;
+var OPPONENT_CONFIG = {};
 
-function start(startAsOnePlayer, random) {
-  onePlayer = startAsOnePlayer;
+function start(random) {
+  onePlayer = OPPONENT_CONFIG["onePlayer"];
+  opponentSlimeIndex = OPPONENT_CONFIG["opponentSlimeIndex"]
 
   slimeLeftScore = 0;
   slimeRightScore = 0;
 
   slimeLeft.img = greenSlimeImage;
   if(onePlayer) {
-    var slimeAIProps = slimeAIs[nextSlimeIndex];
+    var slimeAIProps = slimeAIs[opponentSlimeIndex];
     // slimeRight.color = slimeAIProps.color;
     // legacySkyColor   = slimeAIProps.legacySkyColor;
     // backImage        = backImages[slimeAIProps.backImageName];
@@ -129,13 +131,13 @@ function renderEndOfPoint() {
     (viewWidth - textWidth)/2, courtYPix + (viewHeight - courtYPix)/2);
 }
 
+function config(onePlayer, opponentSlimeIndex) {
+  OPPONENT_CONFIG["onePlayer"] = onePlayer;
+  OPPONENT_CONFIG["opponentSlimeIndex"] = opponentSlimeIndex;
+}
+
 function reset(random, opponent) {
-  if (opponent === 0) {
-    start(false, random);
-  } else {
-    nextSlimeIndex = opponent
-    start(true, random);
-  }
+  start(random);
   return step([0,0,0],[0,0,0], false, 1);
 }
 

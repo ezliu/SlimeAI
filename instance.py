@@ -11,7 +11,7 @@ class ObservationMode:
 
 
 class Instance(object):
-    def __init__(self, observation_mode, headless=False):
+    def __init__(self, observation_mode, headless=False, onePlayer=0, opponent=2):
         """
         Args:
             observation_mode (int): See ObservationMode
@@ -33,6 +33,9 @@ class Instance(object):
         self._driver.implicitly_wait(5)
         if headless:
             self._driver.get(self._url)
+
+        self._driver.execute_script('return config({}, {});'.format(
+            onePlayer, opponent))
 
     # TODO: skip to every 4 frames
     def step(self, action1, action2, render=False):
@@ -62,14 +65,14 @@ class Instance(object):
         return (next_states.p1_state, next_states.p2_state), response["reward"], \
                 response["done"]
 
-    def reset(self, opponent=0):
+    def reset(self):
         """Starts a new episode and returns the first state.
 
         Returns:
             states ((np.array, np.array)): (player 1 state, player 2 state)
         """
-        response = self._driver.execute_script('return reset({}, {});'.format(
-            random.random(), opponent))
+        response = self._driver.execute_script('return reset({});'.format(
+            random.random()))
         next_states = State(response)
         #next_states1 = response["player1"] + response["ball"] + response["player2"]
         #next_states2 = response["player2"] + response["ball"] + response["player1"]
