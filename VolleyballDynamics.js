@@ -47,6 +47,10 @@ function start(startAsOnePlayer, random) {
   //gameIntervalObject = setInterval(asyncStep, 20);
 }
 
+function getPixels() {
+  return canvas.toDataURL('image/png').substring(21);
+}
+
 function asyncStep() {
   action1 = [keysDown[KEY_A], keysDown[KEY_W], keysDown[KEY_D]];
   action2 = [keysDown[KEY_LEFT], keysDown[KEY_UP], keysDown[KEY_RIGHT]];

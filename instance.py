@@ -1,6 +1,9 @@
+import base64
 import numpy as np
 import os
 import random
+from cStringIO import StringIO
+from PIL import Image
 from state import State
 from selenium import webdriver
 
@@ -61,12 +64,36 @@ class Instance(object):
                 'return step({}, {}, 4);'.format(
                     action1.to_list(True), action2.to_list(False)))
         next_states = State(response)
+        next_states = (next_states.p1_state, next_states.p2_state)
         #next_states1 = response["player1"] + response["ball"] + response["player2"]
         #next_states2 = response["player2"] + response["ball"] + response["player1"]
         #print next_states.p1_state
         #print next_states.p2_state
-        return (next_states.p1_state, next_states.p2_state), response["reward"], \
+        #pixel_state = self._get_screenshot()
+        #self._downsample_and_grayscale(pixel_state)
+        if self._observation_mode == ObservationMode.PIXEL:
+            pixel_state = self._get_screenshot()
+            next_states = (pixel_state, np.flip(pixel_state, 1))
+        return next_states, response["reward"], \
                 response["done"]
+
+    def _get_screenshot(self):
+        png_data = base64.b64decode(self._driver.execute_script("return getPixels();"))
+        pil_image = Image.open(StringIO(png_data)).convert("RGB")
+        np_image = np.array(pil_image).astype(np.float32)
+        return np_image
+
+    def _downsample_and_grayscale(self, screenshot):
+        # screenshot is (375, 750, 3)
+        screenshot = np.dot(
+                screenshot.astype('float32'), np.array([0.299, 0.587, 0.114], 'float32'))
+        screenshot = np.array(Image.fromarray(screenshot).resize((84, 84),
+            resample=Image.BILINEAR), dtype=np.float32)
+        screenshot = screenshot.reshape((84, 84))
+        import scipy.misc
+        scipy.misc.imsave("tmp1.png", screenshot)
+        assert False
+        return screenshot
 
     def reset(self):
         """Starts a new episode and returns the first state.
