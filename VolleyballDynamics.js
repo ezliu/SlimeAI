@@ -161,7 +161,7 @@ function step(player1Action, player2Action, numFrames) {
     keysDown[KEY_RIGHT] = rightKey2;
 
     // Only render last frame
-    reward += gameIteration(RENDER_ENV && i == numFrames - 1);
+    reward += gameIteration((RENDER_ENV && i === numFrames - 1));
     done = slimeLeftScore >= WIN_AMOUNT || slimeRightScore >= WIN_AMOUNT;
     if (done) {
       break;
@@ -205,7 +205,7 @@ function gameIteration(render) {
 
     var reward = updateFrame();
     updatesToPaint++;
-    if((RENDER_GLOBAL || render) && updatesToPaint == 1) {
+    if((RENDER_GLOBAL || render) && updatesToPaint > 1) {
       //requestAnimationFrame(renderGame);
       renderGame();
     }
