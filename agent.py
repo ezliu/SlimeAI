@@ -8,6 +8,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from action import Action
+from instance import ObservationMode
 from torch.nn.utils import clip_grad_norm
 from utils import GPUVariable
 
@@ -59,10 +60,19 @@ class RandomAgent(Agent):
 
 
 class DQNAgent(Agent):
-    def __init__(self, num_actions, epsilon_schedule, lr=0.00025, max_grad_norm=10., name=None):
+    def __init__(self, num_actions, epsilon_schedule, observation_mode,
+                 lr=0.00025, max_grad_norm=10., name=None):
         super(DQNAgent, self).__init__(name)
-        self._Q = DQN(num_actions, StateEmbedder())
-        self._target_Q = DQN(num_actions, StateEmbedder())
+        if observation_mode == ObservationMode.PIXEL:
+            embedder = PixelStateEmbedder
+        elif observation_mode == ObservationMode.RAM:
+            embedder = StructuredStateEmbedder
+        else:
+            raise ValueError(
+                    "{} not a valid observation mode".format(observation_mode))
+
+        self._Q = DQN(num_actions, embedder())
+        self._target_Q = DQN(num_actions, embedder())
         self._epsilon_schedule = epsilon_schedule
         self._epsilon = 1.
         self._max_q = collections.deque(maxlen=1000)
@@ -203,9 +213,9 @@ class DQN(nn.Module):
         return self._q_values(self._state_embedder(states))
 
 
-class StateEmbedder(nn.Module):
+class StructuredStateEmbedder(nn.Module):
     def __init__(self):
-        super(StateEmbedder, self).__init__()
+        super(StructuredStateEmbedder, self).__init__()
         self._layer1 = nn.Linear(14, 128)
         self._layer2 = nn.Linear(128, 128)
         self._layer3 = nn.Linear(128, 128)
@@ -228,6 +238,41 @@ class StateEmbedder(nn.Module):
     @property
     def embed_dim(self):
         return 128
+
+
+class PixelStateEmbedder(nn.Module):
+    def __init__(self):
+        super(PixelStateEmbedder, self).__init__()
+
+        self._layer1 = nn.Conv2d(4, 32, kernel_size=8, stride=4)
+        # Pad so that layer2 outputs 10 x 10 x 64
+        self._layer2_pad = nn.ZeroPad2d((1, 2, 1, 2))
+        self._layer2 = nn.Conv2d(32, 64, kernel_size=4, stride=2)
+        self._layer3 = nn.Conv2d(64, 64, padding=(1, 1),
+                                 kernel_size=3, stride=1)
+        self._layer4 = nn.Linear(10 * 10 * 64, 512)
+
+    def forward(self, states):
+        """Embeds the states
+
+        Args:
+            states (FloatTensor): shape (batch_size, 84, 84, 3)
+
+        Returns:
+            FloatTensor: (batch_size, 512)
+        """
+        # Re-arrange to (batch, channels, width, height)
+        states = states.transpose(1, 3).transpose(2, 3)
+
+        hidden = F.relu(self._layer1(states))
+        hidden = F.relu(self._layer2(self._layer2_pad(hidden)))
+        hidden = F.relu(self._layer3(hidden))
+        hidden = hidden.view((-1, 10 * 10 * 64))  # flatten
+        return F.relu(self._layer4(hidden))
+
+    @property
+    def embed_dim(self):
+        return 512
 
 
 def epsilon_greedy(q_values, epsilon):
