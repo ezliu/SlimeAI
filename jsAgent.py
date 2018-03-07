@@ -96,10 +96,10 @@ if len(sys.argv) != 2:
     print "Usage: python jsAgent.py 0/1/2/3"
     print "0 for human"
     print "1 for Easy Hard Coded AI"
-    print "2 for Easy Hard Coded AI"
-    print "3 for Easy Hard Coded AI"
-OPPONENT = int(sys.argv[1])
-env = Instance(OBSERVATION_MODE, onePlayer=1, opponent=OPPONENT)
+    print "2 for Medium Hard Coded AI"
+    print "3 for DIfficult Hard Coded AI"
+OPPONENT = int(sys.argv[1]) - 1
+env = Instance(OBSERVATION_MODE, opponent=OPPONENT)
 
 while True:
     challenger_round()

@@ -11,7 +11,7 @@ class ObservationMode:
 
 
 class Instance(object):
-    def __init__(self, observation_mode, headless=False, onePlayer=0, opponent=2):
+    def __init__(self, observation_mode, headless=False, opponent=-1, render=0):
         """
         Args:
             observation_mode (int): See ObservationMode
@@ -35,10 +35,10 @@ class Instance(object):
             self._driver.get(self._url)
 
         self._driver.execute_script('return config({}, {});'.format(
-            onePlayer, opponent))
+            opponent, render))
 
     # TODO: skip to every 4 frames
-    def step(self, action1, action2, render=False):
+    def step(self, action1, action2):
         """Takes an action, returns the next state.
 
         Args:
@@ -55,8 +55,8 @@ class Instance(object):
         """
         # TODO: Max state over last observations
         response = self._driver.execute_script(
-                'return step({}, {}, {}, 4);'.format(
-                    action1.to_list(True), action2.to_list(False), int(render)))
+                'return step({}, {}, 4);'.format(
+                    action1.to_list(True), action2.to_list(False)))
         next_states = State(response)
         #next_states1 = response["player1"] + response["ball"] + response["player2"]
         #next_states2 = response["player2"] + response["ball"] + response["player1"]

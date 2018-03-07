@@ -1,6 +1,6 @@
 var TWO_PI = Math.PI*2;
 var WIN_AMOUNT = 7;
-var RENDER_GLOBAL = false;
+var RENDER_GLOBAL;
 var OPPONENT_CONFIG = {};
 
 function start(random) {
@@ -52,7 +52,7 @@ function asyncStep() {
   action1 = [keysDown[KEY_A], keysDown[KEY_W], keysDown[KEY_D]];
   action2 = [keysDown[KEY_LEFT], keysDown[KEY_UP], keysDown[KEY_RIGHT]];
   keysDown = {};
-  step(action1, action2, false, 1);
+  step(action1, action2, 1);
 }
 
 function renderBackground() {
@@ -131,19 +131,26 @@ function renderEndOfPoint() {
     (viewWidth - textWidth)/2, courtYPix + (viewHeight - courtYPix)/2);
 }
 
-function config(onePlayer, opponentSlimeIndex) {
-  OPPONENT_CONFIG["onePlayer"] = onePlayer;
-  OPPONENT_CONFIG["opponentSlimeIndex"] = opponentSlimeIndex;
+function config(opponentSlimeIndex, render) {
+  console.log(render);
+  RENDER_GLOBAL = render;
+  console.log(opponentSlimeIndex);
+  if (opponentSlimeIndex == -1) {
+    OPPONENT_CONFIG["onePlayer"] = false;
+  } else {
+    OPPONENT_CONFIG["onePlayer"] = true;
+    OPPONENT_CONFIG["opponentSlimeIndex"] = opponentSlimeIndex;
+  }
 }
 
 function reset(random, opponent) {
   start(random);
-  return step([0,0,0],[0,0,0], false, 1);
+  return step([0,0,0],[0,0,0], 1);
 }
 
 // player actons are boolean array for left, up, right movement
 // if render is true then renders in chrome
-function step(player1Action, player2Action, render, numFrames) {
+function step(player1Action, player2Action, numFrames) {
   var reward = 0;
   var done = false;
   for (var i = 0; i < numFrames; i++) {
@@ -168,7 +175,7 @@ function step(player1Action, player2Action, render, numFrames) {
       keysDown[KEY_RIGHT] = rightKey2;
     }
 
-    reward += gameIteration(render);
+    reward += gameIteration();
     done = slimeLeftScore >= WIN_AMOUNT || slimeRightScore >= WIN_AMOUNT;
     if (done) {
       break;
@@ -201,7 +208,7 @@ function step(player1Action, player2Action, render, numFrames) {
   }
 }
 // returns true if end of point
-function gameIteration(render) {
+function gameIteration() {
   if(gameState == GAME_STATE_RUNNING) {
     updateCount++;
     // if(slowMotion && (updateCount % 2) == 0)
@@ -212,7 +219,7 @@ function gameIteration(render) {
 
     var reward = updateFrame();
     updatesToPaint++;
-    if((RENDER_GLOBAL || render) && updatesToPaint == 1) {
+    if(RENDER_GLOBAL && updatesToPaint == 1) {
       requestAnimationFrame(renderGame);
     }
   }
@@ -488,6 +495,7 @@ function endPoint() {
   } else {
     endOfPointText = 'Player ' + (leftWon ? '1':'2') + ' scores!';
   }
+  endOfPointText = 'Player ' + (leftWon ? '1':'2') + ' scores!';
   gameState = GAME_STATE_POINT_PAUSE;
   requestAnimationFrame(renderEndOfPoint);
   startNextPoint();
