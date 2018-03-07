@@ -153,6 +153,7 @@ class DQNAgent(Agent):
                 "Min Q": sum(self._min_q) / len(self._min_q),
                 "Avg Loss": sum(self._avg_loss) / len(self._avg_loss)}
 
+
 class EnsembleDQNAgent(Agent):
     """Set of DQNAgents. Each episode is rolled out with a random
     agent. Updating updates each of the ensembles.

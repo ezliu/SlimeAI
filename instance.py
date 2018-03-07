@@ -11,7 +11,7 @@ class ObservationMode:
 
 
 class Instance(object):
-    def __init__(self, observation_mode, headless=False):
+    def __init__(self, observation_mode, headless=False, render=False):
         """
         Args:
             observation_mode (int): See ObservationMode
@@ -33,9 +33,15 @@ class Instance(object):
         self._driver.implicitly_wait(5)
         if headless:
             self._driver.get(self._url)
+        self._observation_mode = observation_mode
+        if observation_mode == ObservationMode.PIXEL:
+            assert render, "Render must be true in pixel mode"
+
+        if render:
+            self._driver.execute_script("RENDER_ENV = true;")
 
     # TODO: skip to every 4 frames
-    def step(self, action1, action2, render=False):
+    def step(self, action1, action2):
         """Takes an action, returns the next state.
 
         Args:
@@ -52,8 +58,8 @@ class Instance(object):
         """
         # TODO: Max state over last observations
         response = self._driver.execute_script(
-                'return step({}, {}, {}, 4);'.format(
-                    action1.to_list(True), action2.to_list(False), int(render)))
+                'return step({}, {}, 4);'.format(
+                    action1.to_list(True), action2.to_list(False)))
         next_states = State(response)
         #next_states1 = response["player1"] + response["ball"] + response["player2"]
         #next_states2 = response["player2"] + response["ball"] + response["player1"]
@@ -68,8 +74,8 @@ class Instance(object):
         Returns:
             states ((np.array, np.array)): (player 1 state, player 2 state)
         """
-        response = self._driver.execute_script('return reset({});'.format(
-            random.random()))
+        response = self._driver.execute_script(
+                'return reset({});'.format(random.random()))
         next_states = State(response)
         #next_states1 = response["player1"] + response["ball"] + response["player2"]
         #next_states2 = response["player2"] + response["ball"] + response["player1"]

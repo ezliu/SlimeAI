@@ -1,6 +1,7 @@
 var TWO_PI = Math.PI*2;
 var WIN_AMOUNT = 7;
 var RENDER_GLOBAL = false;
+var RENDER_ENV = false;
 
 function start(startAsOnePlayer, random) {
   onePlayer = startAsOnePlayer;
@@ -131,12 +132,11 @@ function renderEndOfPoint() {
 
 function reset(random) {
   start(false, random);
-  return step([0,0,0],[0,0,0], false, 1);
+  return step([0,0,0],[0,0,0], 1);
 }
 
 // player actons are boolean array for left, up, right movement
-// if render is true then renders in chrome
-function step(player1Action, player2Action, render, numFrames) {
+function step(player1Action, player2Action, numFrames) {
   var reward = 0;
   var done = false;
   for (var i = 0; i < numFrames; i++) {
@@ -156,7 +156,8 @@ function step(player1Action, player2Action, render, numFrames) {
     keysDown[KEY_UP] = upKey2;
     keysDown[KEY_RIGHT] = rightKey2;
 
-    reward += gameIteration(render);
+    // Only render last frame
+    reward += gameIteration(RENDER_ENV && i == numFrames - 1);
     done = slimeLeftScore >= WIN_AMOUNT || slimeRightScore >= WIN_AMOUNT;
     if (done) {
       break;
@@ -201,7 +202,8 @@ function gameIteration(render) {
     var reward = updateFrame();
     updatesToPaint++;
     if((RENDER_GLOBAL || render) && updatesToPaint == 1) {
-      requestAnimationFrame(renderGame);
+      //requestAnimationFrame(renderGame);
+      renderGame();
     }
   }
   return reward;
@@ -477,7 +479,9 @@ function endPoint() {
     endOfPointText = 'Player ' + (leftWon ? '1':'2') + ' scores!';
   }
   gameState = GAME_STATE_POINT_PAUSE;
-  requestAnimationFrame(renderEndOfPoint);
+  if (RENDER_ENV) {
+    renderEndOfPoint();
+  }
   startNextPoint();
   //setTimeout(function () {
   //  if(gameState == GAME_STATE_POINT_PAUSE) {
