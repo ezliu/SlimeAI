@@ -1,4 +1,4 @@
-from agent import DQNAgent, RandomAgent, EnsembleDQNAgent
+from agent import DQNAgent, RandomAgent, EnsembleDQNAgent, JavaScriptAgent
 from instance import Instance, ObservationMode
 from time import sleep
 from replay import ReplayBuffer, Experience
@@ -10,6 +10,7 @@ import os
 import random
 import torch.optim as optim
 import torch
+import sys
 
 ######################################################
 ###### Configs
@@ -34,8 +35,6 @@ SEED = 7
 random.seed(SEED)
 np.random.seed(SEED)
 torch.manual_seed(SEED)
-
-env = Instance(OBSERVATION_MODE)
 
 def evaluate(challenger, leader, num_episodes=10):
     """Rolls out num_episodes episodes and returns the average score of the
@@ -120,6 +119,9 @@ def challenger_round():
 
     challenger = EnsembleDQNAgent(challengers)
     leader = EnsembleDQNAgent(leaders)
+    if OPPONENT is not None:
+        leader = JavaScriptAgent(6)
+
     replay_buffer = ReplayBuffer(1000000)
     rewards = collections.deque(maxlen=1000)
     frames = 0  # number of training frames seen
@@ -135,6 +137,8 @@ def challenger_round():
             # Each loop completes a single step, duplicates _evaluate() to
             # update at the appropriate frame #s
             for _ in xrange(MAX_EPISODE_LENGTH):
+                if OPPONENT is not None:
+                    sleep(0.1)
                 frames += 1
                 episode_frames += 1
                 action1 = challenger.act(states[0])
@@ -187,6 +191,21 @@ def challenger_round():
             progress.set_postfix(stats, refresh=False)
             progress.update(episode_frames)
             episode_frames = 0
+
+if len(sys.argv) > 2:
+    print "Usage for Training: python main.py"
+    print "Usage: python main.py 0/1/2/3"
+    print "0 for human"
+    print "1 for Easy Hard Coded AI"
+    print "2 for Medium Hard Coded AI"
+    print "3 for DIfficult Hard Coded AI"
+
+if len(sys.argv) == 2:
+    OPPONENT = int(sys.argv[1]) - 1
+    print OPPONENT
+else:
+    OPPONENT = None
+env = Instance(OBSERVATION_MODE, opponent=OPPONENT)
 
 while True:
     challenger_round()
