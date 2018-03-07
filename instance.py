@@ -62,14 +62,14 @@ class Instance(object):
         return (next_states.p1_state, next_states.p2_state), response["reward"], \
                 response["done"]
 
-    def reset(self):
+    def reset(self, opponent=0):
         """Starts a new episode and returns the first state.
 
         Returns:
             states ((np.array, np.array)): (player 1 state, player 2 state)
         """
-        response = self._driver.execute_script('return reset({});'.format(
-            random.random()))
+        response = self._driver.execute_script('return reset({}, {});'.format(
+            random.random(), opponent))
         next_states = State(response)
         #next_states1 = response["player1"] + response["ball"] + response["player2"]
         #next_states2 = response["player2"] + response["ball"] + response["player1"]

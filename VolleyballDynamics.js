@@ -11,28 +11,28 @@ function start(startAsOnePlayer, random) {
   slimeLeft.img = greenSlimeImage;
   if(onePlayer) {
     var slimeAIProps = slimeAIs[nextSlimeIndex];
-    slimeRight.color = slimeAIProps.color;
-    legacySkyColor   = slimeAIProps.legacySkyColor;
-    backImage        = backImages[slimeAIProps.backImageName];
-    backTextColor    = slimeAIProps.backTextColor;
-    legacyGroundColor= slimeAIProps.legacyGroundColor;
-    legacyBallColor  = slimeAIProps.legacyBallColor;
-    newGroundColor   = slimeAIProps.newGroundColor;
+    // slimeRight.color = slimeAIProps.color;
+    // legacySkyColor   = slimeAIProps.legacySkyColor;
+    // backImage        = backImages[slimeAIProps.backImageName];
+    // backTextColor    = slimeAIProps.backTextColor;
+    // legacyGroundColor= slimeAIProps.legacyGroundColor;
+    // legacyBallColor  = slimeAIProps.legacyBallColor;
+    // newGroundColor   = slimeAIProps.newGroundColor;
 
-    slimeRight.img   = null;
+    // slimeRight.img   = null;
     slimeAI          = newSlimeAI(false,slimeAIProps.name);
     slimeAIProps.initAI(slimeAI);
   } else {
-    legacySkyColor   = '#00f';
-    backImage        = backImages['sky'];
-    backTextColor    = '#000';
-    legacyGroundColor= '#888';
-    legacyBallColor  = '#fff';
-    newGroundColor   = '#ca6';
-
-    slimeRight.img   = redSlimeImage;
     slimeAI          = null;
   }
+
+  legacySkyColor   = '#00f';
+  backImage        = backImages['sky'];
+  backTextColor    = '#000';
+  legacyGroundColor= '#888';
+  legacyBallColor  = '#fff';
+  newGroundColor   = '#ca6';
+  slimeRight.img   = redSlimeImage;
 
   starting = random >= 0.5;
   initRound(starting);
@@ -129,8 +129,13 @@ function renderEndOfPoint() {
     (viewWidth - textWidth)/2, courtYPix + (viewHeight - courtYPix)/2);
 }
 
-function reset(random) {
-  start(false, random);
+function reset(random, opponent) {
+  if (opponent === 0) {
+    start(false, random);
+  } else {
+    nextSlimeIndex = opponent
+    start(true, random);
+  }
   return step([0,0,0],[0,0,0], false, 1);
 }
 
@@ -140,21 +145,26 @@ function step(player1Action, player2Action, render, numFrames) {
   var reward = 0;
   var done = false;
   for (var i = 0; i < numFrames; i++) {
-    keysDown = {};
+    // keysDown = {};
 
-    leftKey1 = player1Action[0];
-    upKey1 = player1Action[1];
-    rightKey1 = player1Action[2];
-    keysDown[KEY_A] = leftKey1;
-    keysDown[KEY_W] = upKey1;
-    keysDown[KEY_D] = rightKey1;
 
-    leftKey2 = player2Action[0];
-    upKey2 = player2Action[1];
-    rightKey2 = player2Action[2];
-    keysDown[KEY_LEFT] = leftKey2;
-    keysDown[KEY_UP] = upKey2;
-    keysDown[KEY_RIGHT] = rightKey2;
+    if (player1Action !== null) {
+      leftKey1 = player1Action[0];
+      upKey1 = player1Action[1];
+      rightKey1 = player1Action[2];
+      keysDown[KEY_A] = leftKey1;
+      keysDown[KEY_W] = upKey1;
+      keysDown[KEY_D] = rightKey1;
+    }
+
+    if (player2Action !== null) {
+      leftKey2 = player2Action[0];
+      upKey2 = player2Action[1];
+      rightKey2 = player2Action[2];
+      keysDown[KEY_LEFT] = leftKey2;
+      keysDown[KEY_UP] = upKey2;
+      keysDown[KEY_RIGHT] = rightKey2;
+    }
 
     reward += gameIteration(render);
     done = slimeLeftScore >= WIN_AMOUNT || slimeRightScore >= WIN_AMOUNT;

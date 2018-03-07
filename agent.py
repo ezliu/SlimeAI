@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from action import Action
+from action import Action, JavaScriptAction
 from torch.nn.utils import clip_grad_norm
 from utils import GPUVariable
 
@@ -47,6 +47,14 @@ class Agent(nn.Module):
 
     def reset(self):
         pass
+
+
+class JavaScriptAgent(Agent):
+    def __init__(self, num_actions, name=None):
+        super(JavaScriptAgent, self).__init__(name)
+
+    def act(self, state, test=False):
+        return JavaScriptAction()
 
 
 class RandomAgent(Agent):

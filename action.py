@@ -49,3 +49,11 @@ class Action(object):
         _, human_readable = self._P1_KEYLIST[self._action_index]
         return "Action({})".format(human_readable)
     __repr__ = __str__
+
+
+class JavaScriptAction(Action):
+    def __init__(self):
+        self._action_index = 0
+
+    def to_list(self, first_player):
+        return "null"
