@@ -28,8 +28,13 @@ MAX_EPISODE_LENGTH = 1000
 EPS_START = 0.3
 EPS_END = 0.1
 LR = 0.00025
-OBSERVATION_MODE = ObservationMode.RAM
+OBSERVATION_MODE = ObservationMode.PIXEL
+RENDER = True
 SEED = 7
+
+if OBSERVATION_MODE == ObservationMode.PIXEL:
+    LEADER_DIR = "pixel-{}".format(LEADER_DIR)
+    GRAVEYARD_DIR = "pixel-{}".format(GRAVEYARD_DIR)
 
 random.seed(SEED)
 np.random.seed(SEED)
@@ -72,7 +77,8 @@ def purge_round():
     for leader_checkpoint in os.listdir(LEADER_DIR):
         path = os.path.join(LEADER_DIR, leader_checkpoint)
         candidate_leader = DQNAgent(
-                6, LinearSchedule(0.05, 0.05, 1), lr=LR, max_grad_norm=GRAD_CLIP_NORM, name=leader_checkpoint)
+                6, LinearSchedule(0.05, 0.05, 1), OBSERVATION_MODE,
+                lr=LR, max_grad_norm=GRAD_CLIP_NORM, name=leader_checkpoint)
         candidate_leader.load_state_dict(torch.load(path))
         candidate_leaders_map[leader_checkpoint] = candidate_leader
 
@@ -105,9 +111,10 @@ def challenger_round():
     epsilon_schedule = LinearSchedule(EPS_START, EPS_END, TRAIN_FRAMES)
     for i in xrange(NUM_LEADERS):
         challenger = DQNAgent(
-                6, epsilon_schedule, lr=LR, max_grad_norm=GRAD_CLIP_NORM)
+                6, epsilon_schedule, OBSERVATION_MODE,
+                lr=LR, max_grad_norm=GRAD_CLIP_NORM)
         if i < len(leader_checkpoints):
-            leader = DQNAgent(6, LinearSchedule(0.1, 0.1, 500000))
+            leader = DQNAgent(6, LinearSchedule(0.1, 0.1, 500000), OBSERVATION_MODE)
             leader_path = os.path.join(LEADER_DIR, leader_checkpoints[i])
             print "LOADING CHECKPOINT: {}".format(leader_path)
             challenger.load_state_dict(torch.load(leader_path))
