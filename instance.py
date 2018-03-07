@@ -2,6 +2,8 @@ import base64
 import numpy as np
 import os
 import random
+import scipy.misc
+from collections import deque
 from cStringIO import StringIO
 from PIL import Image
 from state import State
@@ -38,7 +40,10 @@ class Instance(object):
             self._driver.get(self._url)
         self._observation_mode = observation_mode
         if observation_mode == ObservationMode.PIXEL:
-            assert render, "Render must be true in pixel mode"
+            render = True
+            self._k = 4  # Number of frames to stack
+            self._frames1 = deque([], maxlen=self._k)
+            self._frames2 = deque([], maxlen=self._k)
 
         if render:
             self._driver.execute_script("RENDER_ENV = true;")
@@ -65,15 +70,13 @@ class Instance(object):
                     action1.to_list(True), action2.to_list(False)))
         next_states = State(response)
         next_states = (next_states.p1_state, next_states.p2_state)
-        #next_states1 = response["player1"] + response["ball"] + response["player2"]
-        #next_states2 = response["player2"] + response["ball"] + response["player1"]
-        #print next_states.p1_state
-        #print next_states.p2_state
-        #pixel_state = self._get_screenshot()
-        #self._downsample_and_grayscale(pixel_state)
         if self._observation_mode == ObservationMode.PIXEL:
-            pixel_state = self._get_screenshot()
-            next_states = (pixel_state, np.flip(pixel_state, 1))
+            pixel_state = self._downsample_and_grayscale(self._get_screenshot())
+            self._frames1.append(pixel_state)
+            self._frames2.append(np.flip(pixel_state, 1))
+            #scipy.misc.imsave("tmp-{}.png".format(self._step), pixel_state.squeeze(-1))
+            next_states = (LazyFrames(list(self._frames1)),
+                           LazyFrames(list(self._frames2)))
         return next_states, response["reward"], \
                 response["done"]
 
@@ -89,10 +92,8 @@ class Instance(object):
                 screenshot.astype('float32'), np.array([0.299, 0.587, 0.114], 'float32'))
         screenshot = np.array(Image.fromarray(screenshot).resize((84, 84),
             resample=Image.BILINEAR), dtype=np.float32)
-        screenshot = screenshot.reshape((84, 84))
-        import scipy.misc
-        scipy.misc.imsave("tmp1.png", screenshot)
-        assert False
+        screenshot = screenshot.reshape((84, 84, 1))
+        #scipy.misc.imsave("tmp1.png", screenshot)
         return screenshot
 
     def reset(self):
@@ -104,6 +105,30 @@ class Instance(object):
         response = self._driver.execute_script(
                 'return reset({});'.format(random.random()))
         next_states = State(response)
-        #next_states1 = response["player1"] + response["ball"] + response["player2"]
-        #next_states2 = response["player2"] + response["ball"] + response["player1"]
-        return (next_states.p1_state, next_states.p2_state)
+        next_states = (next_states.p1_state, next_states.p2_state)
+        if self._observation_mode == ObservationMode.PIXEL:
+            pixel_state = self._downsample_and_grayscale(self._get_screenshot())
+            for _ in xrange(self._k):
+                self._frames1.append(pixel_state)
+                self._frames2.append(np.flip(pixel_state, 1))
+            next_states = (LazyFrames(list(self._frames1)),
+                           LazyFrames(list(self._frames2)))
+        return next_states
+
+
+# Adapted from OpenAI Gym baselines
+# https://github.com/openai/baselines/blob/master/baselines/common/atari_wrappers.py
+class LazyFrames(object):
+    def __init__(self, frames):
+        """This object ensures that common frames between the observations are
+        only stored once.  It exists purely to optimize memory usage which can
+        be huge for DQN's 1M frames replay buffers.  This object should only be
+        converted to numpy array before being passed to the model.  You'd not
+        believe how complex the previous solution was."""
+        self._frames = frames
+
+    def __array__(self, dtype=None):
+        out = np.concatenate(self._frames, axis=2)
+        if dtype is not None:
+            out = out.astype(dtype)
+        return out
