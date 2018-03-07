@@ -29,7 +29,6 @@ EPS_START = 0.3
 EPS_END = 0.1
 LR = 0.00025
 OBSERVATION_MODE = ObservationMode.PIXEL
-RENDER = True
 SEED = 7
 
 if OBSERVATION_MODE == ObservationMode.PIXEL:
