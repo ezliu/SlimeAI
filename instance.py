@@ -35,7 +35,7 @@ class Instance(object):
             self._driver.get(self._url)
 
     # TODO: skip to every 4 frames
-    def step(self, action1, action2, render=False):
+    def step(self, action1, action2, render=True):
         """Takes an action, returns the next state.
 
         Args:

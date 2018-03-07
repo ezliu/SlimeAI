@@ -131,7 +131,7 @@ function renderEndOfPoint() {
 
 function reset(random) {
   start(false, random);
-  return step([0,0,0],[0,0,0], false);
+  return step([0,0,0],[0,0,0], true);
 }
 
 // player actons are boolean array for left, up, right movement
@@ -357,6 +357,11 @@ function updateBall() {
   ball.x += ball.velocityX;
   ball.y += ball.velocityY;
 
+//  if (keysDown[16]) {
+//    keysDown[16] = false;
+//    ball.velocityY += 45;
+//  }
+//
   collisionBallSlime(slimeLeft);
   collisionBallSlime(slimeRight);
 
@@ -382,6 +387,10 @@ function updateBall() {
       ball.velocityX = ball.velocityX <= 0 ? -ball.velocityX : ball.velocityX;
     }
   }
+
+  //if (ball.x < 480 && ball.y < 30) {
+  //  ball.velocityY = 30;
+  //}
 
   var reward = 0.0;
   // Check for end of point

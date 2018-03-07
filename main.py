@@ -55,7 +55,7 @@ def evaluate(challenger, leader, num_episodes=10):
         for _ in xrange(MAX_EPISODE_LENGTH):
             action1 = challenger.act(states[0], True)
             action2 = leader.act(states[1], True)
-            next_states, reward, done = env.step(action1, action2)
+            next_states, reward, done = env.step(action1, action2, True)
             episode_reward += reward
             states = next_states
 
@@ -97,36 +97,36 @@ def purge_round():
 
 def challenger_round():
     #challengers = []
-    #leaders = []
-    #leader_checkpoints = os.listdir(LEADER_DIR)
+    leaders = []
+    leader_checkpoints = os.listdir(LEADER_DIR)
     #challenger_parameters = []
-    #for i in xrange(NUM_LEADERS):
-    #    challenger = DQNAgent(6, LinearSchedule(EPS_START, EPS_END, TRAIN_FRAMES))
-    #    if i < len(leader_checkpoints):
-    #        leader = DQNAgent(6, LinearSchedule(0.1, 0.1, 500000))
-    #        leader_path = os.path.join(LEADER_DIR, leader_checkpoints[i])
-    #        print "LOADING CHECKPOINT: {}".format(leader_path)
-    #        challenger.load_state_dict(torch.load(leader_path))
-    #        leader.load_state_dict(torch.load(leader_path))
-    #    else:
-    #        leader = RandomAgent(6)
-    #        print "INITIALIZING NEW CHALLENGER AND LEADER"
-    #    challenger_parameters += challenger.parameters()
-    #    challengers.append(challenger)
-    #    leaders.append(leader)
+    for i in xrange(NUM_LEADERS):
+        #challenger = DQNAgent(6, LinearSchedule(EPS_START, EPS_END, TRAIN_FRAMES))
+        if i == 0:
+            leader = DQNAgent(6, LinearSchedule(0.01, 0.01, 500000))
+            leader_path = os.path.join(LEADER_DIR, leader_checkpoints[i])
+            print "LOADING CHECKPOINT: {}".format(leader_path)
+            #challenger.load_state_dict(torch.load(leader_path))
+            leader.load_state_dict(torch.load(leader_path))
+        #else:
+        #    leader = RandomAgent(6)
+        #    print "INITIALIZING NEW CHALLENGER AND LEADER"
+        #challenger_parameters += challenger.parameters()
+        #challengers.append(challenger)
+        leaders.append(leader)
 
     challenger = HumanAgent(6)
     #challenger = DQNAgent(
     #        6, LinearSchedule(EPS_START, EPS_END, TRAIN_FRAMES),
     #        lr=LR, max_grad_norm=GRAD_CLIP_NORM)
-    leader = DQNAgent(6, LinearSchedule(0.1, 0.1, 500000))
-    leader_checkpoints = os.listdir(LEADER_DIR)
-    leader_path = os.path.join(LEADER_DIR, leader_checkpoints[0])
-    print "LOADING CHECKPOINT: {}".format(leader_path)
-    #challenger.load_state_dict(torch.load(leader_path))
-    leader.load_state_dict(torch.load(leader_path))
+    #leader = DQNAgent(6, LinearSchedule(0.01, 0.01, 500000))
+    #leader_checkpoints = os.listdir(LEADER_DIR)
+    #leader_path = os.path.join(LEADER_DIR, leader_checkpoints[1])
+    #print "LOADING CHECKPOINT: {}".format(leader_path)
+    ##challenger.load_state_dict(torch.load(leader_path))
+    #leader.load_state_dict(torch.load(leader_path))
     #challenger = EnsembleDQNAgent(challengers)
-    #leader = EnsembleDQNAgent(leaders)
+    leader = EnsembleDQNAgent(leaders)
     replay_buffer = ReplayBuffer(1000000)
     rewards = collections.deque(maxlen=1000)
     frames = 0  # number of training frames seen
@@ -147,7 +147,7 @@ def challenger_round():
                 episode_frames += 1
                 action1 = challenger.act(states[0])
                 action2 = leader.act(states[1])
-                next_states, reward, done = env.step(action1, action2)
+                next_states, reward, done = env.step(action1, action2, True)
                 sleep(0.02)
                 episode_reward += reward
 
