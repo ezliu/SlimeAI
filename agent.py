@@ -292,7 +292,7 @@ def epsilon_greedy(q_values, epsilon):
     actions = []
     for i in xrange(batch_size):
         if random.random() > epsilon:
-            actions.append(max_indices[i])
+            actions.append(int(max_indices[i]))
         else:
             actions.append(random.randint(0, num_actions - 1))
     return actions
