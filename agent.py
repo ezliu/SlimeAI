@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from action import Action
+from action import Action, NoOpAction
 from instance import ObservationMode
 from torch.nn.utils import clip_grad_norm
 from utils import GPUVariable
@@ -48,6 +48,14 @@ class Agent(nn.Module):
 
     def reset(self):
         pass
+
+
+class NoOpAgent(Agent):
+    def __init__(self, name=None):
+        super(NoOpAgent, self).__init__(name)
+
+    def act(self, state, test=False):
+        return NoOpAction()
 
 
 class RandomAgent(Agent):

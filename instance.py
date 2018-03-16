@@ -16,7 +16,8 @@ class ObservationMode:
 
 
 class Instance(object):
-    def __init__(self, observation_mode, headless=False, render=False):
+    def __init__(self, observation_mode, headless=False,
+                 render=False, opponent=None):
         """
         Args:
             observation_mode (int): See ObservationMode
@@ -47,6 +48,10 @@ class Instance(object):
 
         if render:
             self._driver.execute_script("RENDER_ENV = true;")
+
+        if opponent:
+            self._driver.execute_script(
+                    "OPPONENT_INDEX = {};".format(opponent))
 
     # TODO: skip to every 4 frames
     def step(self, action1, action2):

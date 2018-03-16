@@ -1,4 +1,4 @@
-from agent import DQNAgent, RandomAgent, EnsembleDQNAgent
+from agent import DQNAgent, RandomAgent, EnsembleDQNAgent, NoOpAgent
 from instance import Instance, ObservationMode
 from time import sleep
 from replay import ReplayBuffer, Experience
@@ -31,6 +31,8 @@ EPS_END = 0.1
 LR = 0.00025
 OBSERVATION_MODE = ObservationMode.PIXEL
 SEED = 7
+OPPONENT = None
+HUMAN = True
 
 if OBSERVATION_MODE == ObservationMode.PIXEL:
     LEADER_DIR = "pixel-{}".format(LEADER_DIR)
@@ -40,7 +42,7 @@ random.seed(SEED)
 np.random.seed(SEED)
 torch.manual_seed(SEED)
 
-env = Instance(OBSERVATION_MODE)
+env = Instance(OBSERVATION_MODE, opponent=OPPONENT)
 
 def evaluate(challenger, leader, num_episodes=10):
     """Rolls out num_episodes episodes and returns the average score of the
@@ -128,6 +130,8 @@ def challenger_round():
 
     challenger = EnsembleDQNAgent(challengers)
     leader = EnsembleDQNAgent(leaders)
+    if OPPONENT is not None or HUMAN:
+        leader = NoOpAgent()
     replay_buffer = ReplayBuffer(1000000)
     rewards = collections.deque(maxlen=1000)
     frames = 0  # number of training frames seen

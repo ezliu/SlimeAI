@@ -49,3 +49,16 @@ class Action(object):
         _, human_readable = self._P1_KEYLIST[self._action_index]
         return "Action({})".format(human_readable)
     __repr__ = __str__
+
+
+class NoOpAction(object):
+    def __init__(self):
+        pass
+
+    def to_list(self, first_player):
+        return "null"
+
+    def __str__(self):
+        _, human_readable = self._P1_KEYLIST[self._action_index]
+        return "NoOpAction({})".format(human_readable)
+    __repr__ = __str__

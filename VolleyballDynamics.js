@@ -2,38 +2,36 @@ var TWO_PI = Math.PI*2;
 var WIN_AMOUNT = 7;
 var RENDER_GLOBAL = false;
 var RENDER_ENV = false;
+var OPPONENT_INDEX = undefined;
 
-function start(startAsOnePlayer, random) {
-  onePlayer = startAsOnePlayer;
-
+function start(random) {
   slimeLeftScore = 0;
   slimeRightScore = 0;
 
   slimeLeft.img = greenSlimeImage;
-  if(onePlayer) {
-    var slimeAIProps = slimeAIs[nextSlimeIndex];
-    slimeRight.color = slimeAIProps.color;
-    legacySkyColor   = slimeAIProps.legacySkyColor;
-    backImage        = backImages[slimeAIProps.backImageName];
-    backTextColor    = slimeAIProps.backTextColor;
-    legacyGroundColor= slimeAIProps.legacyGroundColor;
-    legacyBallColor  = slimeAIProps.legacyBallColor;
-    newGroundColor   = slimeAIProps.newGroundColor;
+  if(OPPONENT_INDEX !== undefined) {
+    console.log("Boo: " + slimeAIs)
+    var slimeAIProps = slimeAIs[OPPONENT_INDEX];
+    //slimeRight.color = slimeAIProps.color;
+    //legacySkyColor   = slimeAIProps.legacySkyColor;
+    //backImage        = backImages[slimeAIProps.backImageName];
+    //backTextColor    = slimeAIProps.backTextColor;
+    //legacyGroundColor= slimeAIProps.legacyGroundColor;
+    //legacyBallColor  = slimeAIProps.legacyBallColor;
+    //newGroundColor   = slimeAIProps.newGroundColor;
 
-    slimeRight.img   = null;
     slimeAI          = newSlimeAI(false,slimeAIProps.name);
     slimeAIProps.initAI(slimeAI);
   } else {
-    legacySkyColor   = '#00f';
-    backImage        = backImages['sky'];
-    backTextColor    = '#000';
-    legacyGroundColor= '#888';
-    legacyBallColor  = '#fff';
-    newGroundColor   = '#ca6';
-
-    slimeRight.img   = redSlimeImage;
     slimeAI          = null;
   }
+
+  legacySkyColor   = '#00f';
+  backImage        = backImages['sky'];
+  backTextColor    = '#000';
+  legacyGroundColor= '#888';
+  legacyBallColor  = '#fff';
+  newGroundColor   = '#ca6';
 
   starting = random >= 0.5;
   initRound(starting);
@@ -135,31 +133,33 @@ function renderEndOfPoint() {
 }
 
 function reset(random) {
-  start(false, random);
+  start(random);
   return step([0,0,0],[0,0,0], 1);
 }
 
 // player actons are boolean array for left, up, right movement
 function step(player1Action, player2Action, numFrames) {
+  console.log("action: " + player2Action);
   var reward = 0;
   var done = false;
   for (var i = 0; i < numFrames; i++) {
-    keysDown = {};
+    if (player1Action !== null) {
+      leftKey1 = player1Action[0];
+      upKey1 = player1Action[1];
+      rightKey1 = player1Action[2];
+      keysDown[KEY_A] = leftKey1;
+      keysDown[KEY_W] = upKey1;
+      keysDown[KEY_D] = rightKey1;
+    }
 
-    leftKey1 = player1Action[0];
-    upKey1 = player1Action[1];
-    rightKey1 = player1Action[2];
-    keysDown[KEY_A] = leftKey1;
-    keysDown[KEY_W] = upKey1;
-    keysDown[KEY_D] = rightKey1;
-
-    leftKey2 = player2Action[0];
-    upKey2 = player2Action[1];
-    rightKey2 = player2Action[2];
-    keysDown[KEY_LEFT] = leftKey2;
-    keysDown[KEY_UP] = upKey2;
-    keysDown[KEY_RIGHT] = rightKey2;
-
+    if (player2Action !== null) {
+      leftKey2 = player2Action[0];
+      upKey2 = player2Action[1];
+      rightKey2 = player2Action[2];
+      keysDown[KEY_LEFT] = leftKey2;
+      keysDown[KEY_UP] = upKey2;
+      keysDown[KEY_RIGHT] = rightKey2;
+    }
     // Only render last frame
     reward += gameIteration((RENDER_ENV && i === numFrames - 1));
     done = slimeLeftScore >= WIN_AMOUNT || slimeRightScore >= WIN_AMOUNT;
@@ -215,7 +215,7 @@ function gameIteration(render) {
 
 // returns true if end of point
 function updateFrame() {
-  if(onePlayer) {
+  if(OPPONENT_INDEX !== undefined) {
     slimeAI.move(false); // Move the right slime
     updateSlimeVelocitiesWithDoubleKeys(slimeLeft,
       KEY_A,KEY_LEFT,
@@ -406,21 +406,10 @@ function updateBall() {
   return reward;
 }
 
-function spaceKeyDown() {
-  if(gameState == GAME_STATE_SHOW_WINNER) {
-    if(onePlayer && nextSlimeIndex >= slimeAIs.length) {
-      nextSlimeIndex = 0;
-      toInitialMenu();
-    } else {
-      start(onePlayer);
-    }
-  }
-}
-
 function endMatch() {
   gameState = GAME_STATE_SHOW_WINNER;
   clearInterval(gameIntervalObject);
-  if(onePlayer) {
+  if(OPPONENT_INDEX !== undefined) {
     if(leftWon) {
 nextSlimeIndex++;
 if(nextSlimeIndex >= slimeAIs.length) {
@@ -473,15 +462,7 @@ function endPoint() {
     return;
   }
 
-  if(onePlayer) {
-    if(leftWon) {
-      endOfPointText = 'Nice, you got the point!';
-    } else {
-      endOfPointText = slimeAI.name + ' scores!';
-    }
-  } else {
-    endOfPointText = 'Player ' + (leftWon ? '1':'2') + ' scores!';
-  }
+  endOfPointText = 'Player ' + (leftWon ? '1':'2') + ' scores!';
   gameState = GAME_STATE_POINT_PAUSE;
   if (RENDER_ENV) {
     renderEndOfPoint();
