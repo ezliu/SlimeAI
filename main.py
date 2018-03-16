@@ -19,30 +19,43 @@ import torch
 
 NUM_LEADERS = 3
 GRAD_CLIP_NORM = 10.
-LEADER_DIR = "leaders"
+LEADER_DIR = "jamie_leaders"
 GRAVEYARD_DIR = "graveyard"
 SAVE_FREQ = 130000
 TRAIN_FRAMES = 390001
-EPISODES_EVALUATE_TRAIN = 10
+EPISODES_EVALUATE_TRAIN = 1000
 EPISODES_EVALUATE_PURGE = 50
 MAX_EPISODE_LENGTH = 1000
 EPS_START = 0.3
 EPS_END = 0.1
 LR = 0.00025
-OBSERVATION_MODE = ObservationMode.PIXEL
+OBSERVATION_MODE = ObservationMode.RAM
 SEED = 7
 OPPONENT = None
-HUMAN = True
+HUMAN = False
+CHALLENGER_DIR = "jamie_leaders"
+CHALLENGER_OBSERVATION_MODE = ObservationMode.PIXEL
+
+assert not (HUMAN and OPPONENT is not None)
+assert not (CHALLENGER_DIR is not None and HUMAN)
+assert not (CHALLENGER_DIR is not None and OPPONENT is not None)
+
+if CHALLENGER_DIR is None:
+    CHALLENGER_DIR = LEADER_DIR
+    CHALLENGER_OBSERVATION_MODE = OBSERVATION_MODE
 
 if OBSERVATION_MODE == ObservationMode.PIXEL:
     LEADER_DIR = "pixel-{}".format(LEADER_DIR)
     GRAVEYARD_DIR = "pixel-{}".format(GRAVEYARD_DIR)
 
+if CHALLENGER_OBSERVATION_MODE == ObservationMode.PIXEL:
+    CHALLENGER_DIR = "pixel-{}".format(CHALLENGER_DIR)
+
 random.seed(SEED)
 np.random.seed(SEED)
 torch.manual_seed(SEED)
 
-env = Instance(OBSERVATION_MODE, opponent=OPPONENT)
+env = Instance((CHALLENGER_OBSERVATION_MODE, OBSERVATION_MODE), render=True, opponent=OPPONENT)
 
 def evaluate(challenger, leader, num_episodes=10):
     """Rolls out num_episodes episodes and returns the average score of the
@@ -60,6 +73,7 @@ def evaluate(challenger, leader, num_episodes=10):
         challenger.reset()
         leader.reset()
         for _ in xrange(MAX_EPISODE_LENGTH):
+            #sleep(0.02)
             action1 = challenger.act(states[0], True)
             action2 = leader.act(states[1], True)
             next_states, reward, done = env.step(action1, action2)
@@ -127,6 +141,19 @@ def challenger_round():
             print "INITIALIZING NEW CHALLENGER AND LEADER"
         challengers.append(challenger)
         leaders.append(leader)
+
+    if CHALLENGER_DIR is not None:
+        challengers = []
+        # Load in all of the leaders
+        for checkpoint in os.listdir(CHALLENGER_DIR):
+            path = os.path.join(CHALLENGER_DIR, checkpoint)
+            print "LOADING FROM CHALLENGER_DIR: {}".format(path)
+            challenger = try_gpu(DQNAgent(
+                    6, LinearSchedule(0.05, 0.05, 1), CHALLENGER_OBSERVATION_MODE,
+                    lr=LR, max_grad_norm=GRAD_CLIP_NORM, name=checkpoint))
+            challenger.load_state_dict(
+                    torch.load(path, map_location=lambda storage, loc: storage))
+            challengers.append(challenger)
 
     challenger = EnsembleDQNAgent(challengers)
     leader = EnsembleDQNAgent(leaders)

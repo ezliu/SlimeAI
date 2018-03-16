@@ -16,11 +16,13 @@ class ObservationMode:
 
 
 class Instance(object):
-    def __init__(self, observation_mode, headless=False,
+    def __init__(self, observation_modes, headless=False,
                  render=False, opponent=None):
         """
         Args:
-            observation_mode (int): See ObservationMode
+            observation_mode ((int, int)): See ObservationMode
+                (observation modes for player 1 and player 2
+                respectively)
             headless (bool): True runs Chrome in headless mode
         """
         if "SLIME_URL" not in os.environ:
@@ -39,8 +41,9 @@ class Instance(object):
         self._driver.implicitly_wait(5)
         if headless:
             self._driver.get(self._url)
-        self._observation_mode = observation_mode
-        if observation_mode == ObservationMode.PIXEL:
+        self._observation_modes = observation_modes
+        if observation_modes[0] == ObservationMode.PIXEL or \
+                observation_modes[1] == ObservationMode.PIXEL:
             render = True
             self._k = 4  # Number of frames to stack
             self._frames1 = deque([], maxlen=self._k)
@@ -74,14 +77,16 @@ class Instance(object):
                 'return step({}, {}, 4);'.format(
                     action1.to_list(True), action2.to_list(False)))
         next_states = State(response)
-        next_states = (next_states.p1_state, next_states.p2_state)
-        if self._observation_mode == ObservationMode.PIXEL:
+        next_states = [next_states.p1_state, next_states.p2_state]
+        if self._observation_modes[0] == ObservationMode.PIXEL:
             pixel_state = self._downsample_and_grayscale(self._get_screenshot())
             self._frames1.append(pixel_state)
+            next_states[0] = LazyFrames(list(self._frames1))
+
+        if self._observation_modes[1] == ObservationMode.PIXEL:
+            pixel_state = self._downsample_and_grayscale(self._get_screenshot())
             self._frames2.append(np.flip(pixel_state, 1))
-            #scipy.misc.imsave("tmp-{}.png".format(self._step), pixel_state.squeeze(-1))
-            next_states = (LazyFrames(list(self._frames1)),
-                           LazyFrames(list(self._frames2)))
+            next_states[1] = LazyFrames(list(self._frames2))
         return next_states, response["reward"], \
                 response["done"]
 
@@ -110,14 +115,18 @@ class Instance(object):
         response = self._driver.execute_script(
                 'return reset({});'.format(random.random()))
         next_states = State(response)
-        next_states = (next_states.p1_state, next_states.p2_state)
-        if self._observation_mode == ObservationMode.PIXEL:
+        next_states = [next_states.p1_state, next_states.p2_state]
+        if self._observation_modes[0] == ObservationMode.PIXEL:
             pixel_state = self._downsample_and_grayscale(self._get_screenshot())
             for _ in xrange(self._k):
                 self._frames1.append(pixel_state)
+            next_states[0] = LazyFrames(list(self._frames1))
+
+        if self._observation_modes[1] == ObservationMode.PIXEL:
+            pixel_state = self._downsample_and_grayscale(self._get_screenshot())
+            for _ in xrange(self._k):
                 self._frames2.append(np.flip(pixel_state, 1))
-            next_states = (LazyFrames(list(self._frames1)),
-                           LazyFrames(list(self._frames2)))
+            next_states[1] = LazyFrames(list(self._frames2))
         return next_states
 
 
