@@ -79,7 +79,7 @@ def purge_round():
         candidate_leader = try_gpu(DQNAgent(
                 6, LinearSchedule(0.05, 0.05, 1), OBSERVATION_MODE,
                 lr=LR, max_grad_norm=GRAD_CLIP_NORM, name=leader_checkpoint))
-        candidate_leader.load_state_dict(torch.load(path))
+        candidate_leader.load_state_dict(torch.load(path, map_location=lambda storage, loc: storage))
         candidate_leaders_map[leader_checkpoint] = candidate_leader
 
     candidate_scores = []  # list[(filename, score)]
@@ -118,8 +118,8 @@ def challenger_round():
                     DQNAgent(6, LinearSchedule(0.1, 0.1, 500000), OBSERVATION_MODE))
             leader_path = os.path.join(LEADER_DIR, leader_checkpoints[i])
             print "LOADING CHECKPOINT: {}".format(leader_path)
-            challenger.load_state_dict(torch.load(leader_path))
-            leader.load_state_dict(torch.load(leader_path))
+            challenger.load_state_dict(torch.load(leader_path, map_location=lambda storage, loc: storage))
+            leader.load_state_dict(torch.load(leader_path, map_location=lambda storage, loc: storage))
         else:
             leader = RandomAgent(6)
             print "INITIALIZING NEW CHALLENGER AND LEADER"
