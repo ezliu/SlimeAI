@@ -284,32 +284,31 @@ best against all the other parameters, we prevent the agent from overfitting
 to playing against itself. Empirically, we observed that when setting $k = 1$,
 the agent performed far worse against unseen opponents than when $k = 5$.
 Additionally, using multiple challengers that share a replay buffer can be
-viewed as a form of bootstrapped DQN (TODO: cite). Although the multiple
-challengers do not share parameters, by allowing each challenger to update on
-the experiences of other challengers, we achieve better exploration. In
-contrast to just $\epsilon$-greedy approaches, which make locally non-greedy
-decisions, by observing the other challengers, we achieve temporally extended
-exploration, where we can explore with an entirely different policy. This
-leads to faster training and improved asymptotic performance.
-
-Our full self-play algorithm is summarized in the pseudocode in TODO.
+viewed as a form of bootstrapped DQN \citep{osband2016deep}. Although the
+multiple challengers do not share parameters, by allowing each challenger to
+update on the experiences of other challengers, we achieve better exploration.
+In contrast to just $\epsilon$-greedy approaches, which make locally
+non-greedy decisions, by observing the other challengers, we achieve
+temporally extended exploration, where we can explore with an entirely
+different policy. This leads to faster training and improved asymptotic
+performance.
 
 \section{Results}
 
 \subsection{Experimental Details}
 We implemented both the pixel-state model and the structured-state model in
-PyTorch (TODO: cite). As inputs to the pixel-state model, we preprocess the
-pixel values of the original $750$ by $375$ gamescreen and downsample to a
-$84$ by $84$ pixel grid. In order to capture velocity information, we stack
-the past $4$ frames. We feed in the grayscale pixel values of the stacked
-frames to the pixel-state model. The pixel-state network consists of three
-convolutional layers followed by two fully connected layers, following (TODO:
-cite). The first layer contains $32$ filters, a square kernel of size $8$, and
-stride $4$. The second layer contains $64$ filters, a square kernel of size
-$4$ and stride $2$. The third layer contains $64$ filters, a square kernel of
-size $3$ and stride $1$. The fourth layer is a fully connected layer that is
-$6400$ by $512$. The output layer is a fully connected layer that is $512$ by
-$6$, which is the number of actions.
+PyTorch \citep{paszke2017automatic}. As inputs to the pixel-state model, we
+preprocess the pixel values of the original $750$ by $375$ gamescreen and
+downsample to a $84$ by $84$ pixel grid. In order to capture velocity
+information, we stack the past $4$ frames. We feed in the grayscale pixel
+values of the stacked frames to the pixel-state model. The pixel-state network
+consists of three convolutional layers followed by two fully connected layers,
+following \citep{nature2013}. The first layer contains $32$ filters, a square kernel
+of size $8$, and stride $4$. The second layer contains $64$ filters, a square
+kernel of size $4$ and stride $2$. The third layer contains $64$ filters, a
+square kernel of size $3$ and stride $1$. The fourth layer is a fully
+connected layer that is $6400$ by $512$. The output layer is a fully connected
+layer that is $512$ by $6$, which is the number of actions.
 
 As inputs to the structured-state model, we normalize the structured states to
 be between $0$ and $1$. We then pass it through four fully connected layers
@@ -321,8 +320,8 @@ steps. We start taking gradient steps from the replay buffer after $50000$
 frames and take a gradient step every $4$ steps on a batch size of $32$
 experiences. Both policies use an $\epsilon$-greedy exploration strategy, with
 $\epsilon$ starting at $1$ and annealing to $0.01$ over the $390000$ frames.
-We use the Adam optimizer (TODO: cite) with learning rate $0.00025$. We use a
-discount factor $\gamma$ of $0.99$.
+We use the Adam optimizer \citep{kingma2014adam} with learning rate $0.00025$.
+We use a discount factor $\gamma$ of $0.99$.
 
 \subsection{Sample Complexity and Asymptotic Performance of Pixels vs
 Structured States}
