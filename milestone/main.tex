@@ -186,7 +186,17 @@ encodes a policy, which at each state $s$ plays the action $a = argmax_{a \in
 \mathcal{A}}Q(s, a)$. Our $Q$ functions are implemented as neural networks. For
 structured state inputs, the network consists of several multi-layer perceptrons
 (MLP). For pixel state inputs, the network consists of several convolutional
-layers, followed by a MLP. The encoded policy can be made non-greedy by
+layers, followed by a MLP.
+
+\begin{figure}[H]
+\center
+\includegraphics[width=\columnwidth]{convnet}
+\caption{
+Visualization of a Convnet from http://cs231n.github.io/convolutional-networks/
+}\label{fig:results}
+\end{figure}
+
+The encoded policy can be made non-greedy by
 following an $\epsilon$-greedy policy, which greedily chooses the best action
 $a$ according to $Q$ with probability $1 - \epsilon$ and choosing a random
 action with probability $\epsilon$. We utilize an $\epsilon$-greedy policy with
