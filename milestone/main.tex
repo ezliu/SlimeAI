@@ -299,28 +299,80 @@ Our full self-play algorithm is summarized in the pseudocode in TODO.
 \subsection{Experimental Details}
 We implemented both the pixel-state model and the structured-state model in
 PyTorch (TODO: cite). As inputs to the pixel-state model, we preprocess the
-pixel values of the original $750$ by $375$ gamescreen and downsample to a $84$
-by $84$ pixel grid. We feed in the grayscale pixel values of this grid to the
-pixel-state model. The pixel-state network consists of three convolutional
-layers followed by two fully connected layers, following (TODO: cite). The first
-layer contains $32$ filters, a square kernel of size $8$, and stride $4$. The
-second layer contains $64$ filters, a square kernel of size $4$ and stride
-$2$. The third layer contains $64$ filters, a square kernel of size $3$ and
-stride $1$. The fourth layer is a fully connected layer that is $6400$ by
-$512$. The output layer is a fully connected layer that is $512$ by $6$, which
-is the number of actions.
+pixel values of the original $750$ by $375$ gamescreen and downsample to a
+$84$ by $84$ pixel grid. In order to capture velocity information, we stack
+the past $4$ frames. We feed in the grayscale pixel values of the stacked
+frames to the pixel-state model. The pixel-state network consists of three
+convolutional layers followed by two fully connected layers, following (TODO:
+cite). The first layer contains $32$ filters, a square kernel of size $8$, and
+stride $4$. The second layer contains $64$ filters, a square kernel of size
+$4$ and stride $2$. The third layer contains $64$ filters, a square kernel of
+size $3$ and stride $1$. The fourth layer is a fully connected layer that is
+$6400$ by $512$. The output layer is a fully connected layer that is $512$ by
+$6$, which is the number of actions.
 
+As inputs to the structured-state model, we normalize the structured states to
+be between $0$ and $1$. We then pass it through four fully connected layers
+with output sizes $128$, $128$, $128$, and $6$ respectively.
+
+Unless otherwise mentioned, we train each agent for $10$ rounds of self-play,
+each round consisting of $390000$ frames, saving parameters every $130000$
+steps. We start taking gradient steps from the replay buffer after $50000$
+frames and take a gradient step every $4$ steps on a batch size of $32$
+experiences. Both policies use an $\epsilon$-greedy exploration strategy, with
+$\epsilon$ starting at $1$ and annealing to $0.01$ over the $390000$ frames.
 We use the Adam optimizer (TODO: cite) with learning rate $0.00025$. We use a
 discount factor $\gamma$ of $0.99$.
 
+\subsection{Sample Complexity and Asymptotic Performance of Pixels vs
+Structured States}
+To evaluate the sample complexity differences and the asymptotic performance
+differences of the pixel-state agent and the structured-state agent, we train
+both agents against a fixed simple hand-coded agent. We train both agents
+until their policies have converged (on an $\epsilon$-greedy schedule
+annealing from $1$ to $0$ in $1000000$ frames). After training, the
+pixel-state agent wins by an average of $6.92$ points per episode and the
+structured-state agent wins by an average of $6.84$ points per episode,
+averaged over $1000$ episodes. This suggests that the asymptotic performances
+of both models is similar. However, the structured-state agent trains to
+convergence in approximately $3000000$ frames, while the pixel-state agent
+takes approximately $8000000$ frames to converge. This is not so surprising,
+because the structured-state agent has far fewer parameters than the
+pixel-state agent, and the structured-state agent does not need to extract as
+much information from the state as the pixel-state agent.
 
-We have currently implemented the models described in the previous sections.
-However, due to limited computational resources, we have limited experimental
-results. We have shown that our models can successfully beat random agents $7$
-to $0$. For the final project, we plan to continue implementing the self-play
-algorithm we described and also run more experiments.
+\subsection{Generalization Against Unseen Opponents}
+We further evaluate the trained pixel-state agents and structured-state agents
+against new opponents that were never seen during training to evaluate their
+ability to generalize. To do this, we evaluate against a human, a very strong
+hand-coded agent (about 200 lines of code designed to play well and make
+tricky shots), and against the agent using the other type of state
+(pixel-state vs. structured-state) and report the score of the agent on the
+left minus the score of the agent on the right, averaged over $1000$ episodes.
+The results of these experiments are summarized in TODO.
 
-\section{Conclusion}
+Interestingly, the pixel-state and structured-state agents consistently beat the
+human, even though the human plays very differently from either of them. This
+suggests that our self-play algorithm successfully trains agents that
+generalize. In addition, the structured-state agent beats the hand-coded
+agent, even though the hand-coded agent is quite strong (it consistently beats
+the human). The pixel-state agent also performs reasonably well against the
+hand-coded agent, although it does lose. The pixel-state agent performs well
+but not as well as the structured-state agent, suggesting that learning from
+structured-state is really better than learning from the pixel-state. This
+suggests that the results on Atari may be due to the extraneous information in
+the RAM states, rather than due to the structured vs. unstructured states.
+Further analysis on Atari is required to definitively determine what causes
+RAM state agents to perform worse than pixel state agents.
+
+Notably, the pixel-state agent may perform less well than the structured-state
+agent due to learning speed. As shown in the previous experiments, the
+pixel-state agent requires more samples to learn than the structured-state
+agent, but in these experiments, they were trained for the same number of
+steps due to limited computation. However, it is still an important result to
+note that structured-state agents can learn more quickly.
+
+Videos of our agents in action are available in the supplementary materials.
 
 {\small
 \bibliographystyle{unsrtnat}
