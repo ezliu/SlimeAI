@@ -320,6 +320,48 @@ results. We have shown that our models can successfully beat random agents $7$
 to $0$. For the final project, we plan to continue implementing the self-play
 algorithm we described and also run more experiments.
 
+\subsection{Analysis}
+
+\begin{figure}[h]
+\center
+\includegraphics[width=\columnwidth]{preprocess}
+\caption{
+Visualizing Hidden States: Preprocessed Pixel State
+}\label{fig:preprocess}
+\end{figure}
+
+\begin{figure}[h]
+\center
+\includegraphics[width=\columnwidth]{layer1}
+\caption{
+Visualizing Hidden States: First Hidden Layer
+}\label{fig:layer1}
+\end{figure}
+
+\begin{figure}[h]
+\center
+\includegraphics[width=\columnwidth]{layer2}
+\caption{
+Visualizing Hidden States: Second Hidden Layer
+}\label{fig:layer2}
+\end{figure}
+
+\begin{figure}[h]
+\center
+\includegraphics[width=\columnwidth]{layer3}
+\caption{
+Visualizing Hidden States: Third Hidden Layer
+}\label{fig:layer3}
+\end{figure}
+
+We can visualize what our CNN is doing by feeding a state into the CNN and
+displaying the output of each layer as a set of images. Figures \ref{fig:preprocess}
+to \ref{fig:layer3} show an example of this visualization. We can see that
+the first hidden layer has some filters that pick out the locations of the ball,
+our own slime, our enemy slime, or some combination of these three. The second
+and third hidden layer somehow encode some other higher level features we
+suspect the streak like patterns could perhaps be encoding the velocities.
+
 \section{Conclusion}
 
 {\small
