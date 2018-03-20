@@ -47,6 +47,23 @@ Stanford University\\
 \maketitle
 %\thispagestyle{empty}
 
+\begin{abstract}
+  One recent surprising result is that reinforcement learning algorithms that
+  utilize pixel inputs outperform those that use structured RAM inputs on the
+  Arcade Learning Environment. We investigate this phenomena on the domain of
+  Slime Volleyball by comparing the performance of algorithms that utilize
+  pixel inputs with those that use structured inputs, trained with self-play.
+  We use convolutional neural networks to learn good representations of the
+  pixel inputs.  In our investigation, we find that both models that use pixel
+  inputs and structured inputs achieve superhuman performance on the task. We
+  further find that models using structured inputs achieve better sample
+  efficiency and performance than models using the pixel inputs, reversing the
+  findings on the Arcade Learning Environment. We conclude that pixel inputs
+  are not better for reinforcement learning algorithms in general, and the
+  result on the Arcade Learning Environment may be due to the extraneous
+  information in the RAM.
+\end{abstract}
+
 \section{Introduction}
 
 In the Reinforcement Learning (RL) paradigm, agents learn to perform complex
