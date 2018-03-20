@@ -294,13 +294,33 @@ leads to faster training and improved asymptotic performance.
 
 Our full self-play algorithm is summarized in the pseudocode in TODO.
 
-\section{Intermediate/Preliminary Results}
+\section{Results}
+
+\subsection{Experimental Details}
+We implemented both the pixel-state model and the structured-state model in
+PyTorch (TODO: cite). As inputs to the pixel-state model, we preprocess the
+pixel values of the original $750$ by $375$ gamescreen and downsample to a $84$
+by $84$ pixel grid. We feed in the grayscale pixel values of this grid to the
+pixel-state model. The pixel-state network consists of three convolutional
+layers followed by two fully connected layers, following (TODO: cite). The first
+layer contains $32$ filters, a square kernel of size $8$, and stride $4$. The
+second layer contains $64$ filters, a square kernel of size $4$ and stride
+$2$. The third layer contains $64$ filters, a square kernel of size $3$ and
+stride $1$. The fourth layer is a fully connected layer that is $6400$ by
+$512$. The output layer is a fully connected layer that is $512$ by $6$, which
+is the number of actions.
+
+We use the Adam optimizer (TODO: cite) with learning rate $0.00025$. We use a
+discount factor $\gamma$ of $0.99$.
+
 
 We have currently implemented the models described in the previous sections.
 However, due to limited computational resources, we have limited experimental
 results. We have shown that our models can successfully beat random agents $7$
 to $0$. For the final project, we plan to continue implementing the self-play
 algorithm we described and also run more experiments.
+
+\section{Conclusion}
 
 {\small
 \bibliographystyle{unsrtnat}
