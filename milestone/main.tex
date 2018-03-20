@@ -7,6 +7,8 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{natbib}
+\usepackage{float}
+
 
 % Include other packages here, before hyperref.
 
@@ -348,7 +350,15 @@ hand-coded agent (about 200 lines of code designed to play well and make
 tricky shots), and against the agent using the other type of state
 (pixel-state vs. structured-state) and report the score of the agent on the
 left minus the score of the agent on the right, averaged over $1000$ episodes.
-The results of these experiments are summarized in TODO.
+The results of these experiments are summarized in \ref{fig:results}.
+
+\begin{figure}[H]
+\center
+\includegraphics[width=\columnwidth]{results}
+\caption{
+Score of Left Agent - Score of Top Agent Averaged over 1000 games
+}\label{fig:results}
+\end{figure}
 
 Interestingly, the pixel-state and structured-state agents consistently beat the
 human, even though the human plays very differently from either of them. This
@@ -375,7 +385,7 @@ Videos of our agents in action are available in the supplementary materials.
 
 \subsection{Analysis}
 
-\begin{figure}[h]
+\begin{figure}[H]
 \center
 \includegraphics[width=\columnwidth]{preprocess}
 \caption{
@@ -383,7 +393,7 @@ Visualizing Hidden States: Preprocessed Pixel State
 }\label{fig:preprocess}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}[H]
 \center
 \includegraphics[width=\columnwidth]{layer1}
 \caption{
@@ -391,7 +401,7 @@ Visualizing Hidden States: First Hidden Layer
 }\label{fig:layer1}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}[H]
 \center
 \includegraphics[width=\columnwidth]{layer2}
 \caption{
@@ -399,7 +409,7 @@ Visualizing Hidden States: Second Hidden Layer
 }\label{fig:layer2}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}[H]
 \center
 \includegraphics[width=\columnwidth]{layer3}
 \caption{
