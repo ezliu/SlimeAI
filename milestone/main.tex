@@ -191,30 +191,108 @@ action with probability $\epsilon$. We utilize an $\epsilon$-greedy policy with
 an $\epsilon$ that anneals to $0$ during training to ensure that the policy
 adequately explores the state and action spaces.
 
+The $Q$ function is updated by taking gradient steps to minimize the
+following loss function, which corresponds to the Bellman update:
+
+\begin{equation}
+  ||Q(s, a) - (r + \gamma \max_{a' \in \mathcal{A}}Q(s', a'))||^2_2
+\end{equation}
+
+\noindent updated on a single experience $(s, a, r, s')$. This experience
+corresponds to the an observation of taking action $a$ in state $s$, resulting
+in the new state $s'$ and reward $r$. $\gamma \in [0, 1]$ is the discount
+factor, which controls how valuable it is to get reward in the future.
+Notably, the DQN algorithm is off-policy, meaning that these $(s, a, r, s')$
+experiences may be collected from following any policy, so long as the policy
+plays every action with a non-zero probability.
+
 Following \citep{nature2013}, we make use of experience replay for learning $Q$. The
-agent follows an the $\epsilon$-greedy policy recording all transitions $(s, a,
-r, s')$ in a fixed-size replay buffer, where $s$ is the state, $a$ is the action
-played in state $s$, $r$ is the received reward, and $s'$ is the resulting new
-state. To update, several of these transitions are sampled and the following
-loss function is optimized: $||Q(s, a) - (r + \gamma \max_{a' \in A}Q(s',
-a'))||^2$. Experience replay enables updates with removed temporal correlations.
-In addition, Q-learning requires many updates to ensure that later $Q$ values
-propagate backwards to earlier $Q$ values. We also make usage of double DQN
-\citep{doubleDQN} so that the network that we max the actions over is different from
-the network we utilize for updates.
+agent follows an the $\epsilon$-greedy policy recording all experiences $(s, a,
+r, s')$ in a fixed-size replay buffer. Periodically during training, a batch
+of experiences is sampled and the above loss function is minimized on the
+batch of experiences. Experience replay enables updates with
+removed temporal correlations. In addition, Q-learning requires many updates
+to ensure that later $Q$ values propagate backwards to earlier $Q$ values and
+experience replay helps propagation happen. Finally, experience replay also
+helps with sample efficiency, since each experience may be updated on many
+times.
+
+\paragraph{Double Deep Q-Networks}
+In addition, to help stabilize the DQN updates, we make usage of double deep
+q-networks \citep{doubleDQN}. In the original formulation of DQN, the
+$\max_{a' \in \mathcal{A}}Q(s', a')$ term in the loss can be overly optimistic
+(too large) from initialization and stochasticity, pushing the $Q$ values to
+be higher than they should be. In order to avoid this issue, we maintain two
+$Q(s, a)$ functions, one parametrized by $\theta$, $Q(s, a; \theta)$ and
+another parametrized by $\theta'$, $Q(s, a; \theta')$. In the new update, we
+take the maximum action over one of the networks, but use the value from the
+other network:
+
+\begin{equation}
+  ||Q(s, a) - (r + \gamma Q(s', arg\max_{a' \in \mathcal{A}}Q(s', a'; \theta'); \theta))||^2_2
+\end{equation}
+
+\noindent This new update helps avoid over-estimating the max $Q$ value.
 
 \subsection{Self-Play}
 
 As previously mentioned, when both agents are updating, the environment
 dynamics appear non-stationary. Notably, in multi-agent systems, independent
 Q-Learning \citep{tan1993multi}, where each agent maintains its own $Q$
-function fails precisely because of the non-stationaryness.  To
-get around this, we use the following self-play algorithm. We keep track of
-the fixed best current agent (initialized randomly). We match the best current
-agent against a contender agent, which is optimized for a fixed number of
-episodes. If the contender agent beats the current agent, then the contender
-agent becomes the new best current agent, and a new contender is created. New
-contenders are initialized from the parameters of the current best agent.
+function fails precisely because of the non-stationaryness. To avoid this
+problem, during self-play, we initialize two copies of the same policy (the
+$Q$ network), which we term the leader and the challenger. During training, we
+fix the parameters of the leader, while the challenger trains against the
+leader using the previously described deep q-learning algorithms.
+Periodically, to ensure that the leader is also training, we clear the replay
+buffer and set the leader's parameters equal to the challenger's updated
+parameters. We are required to throw away the replay buffer when we change the
+leader because the replay buffer encodes information about the environment
+dynamics. When the leader changes, the environment dynamics effectively
+change, so the information in the replay buffer is now useless.
+
+\paragraph{Generalization}
+
+When the agent is trained using self-play exactly as above, it faces issues of
+generalization against unseen opponents. Ideally, after self-play, we'd like
+for our agent to perform well against all other types of opponents, not just
+opponents that play like itself. Drawing a connection to supervised learning,
+there is a distribution of all agents for the game. During training, we sample
+agents from this distribution (in our case, our samples are exactly the copies
+of the agent being trained) and training against those agents. During test
+time, we hope to perform well against other agents drawn from the distribution
+that we never saw during training time. In the above algorithm, the agent only
+sees very few types of other opponents, and so when playing against new unseen
+opponents, it performs poorly.
+
+To remedy this issue, we keep track of the best $k$ parameters and train
+against $k$ leaders. At the beginning of a training round, $k$ leaders and $k$
+challengers are initialized with the best $k$ parameters (or randomly
+initialized if $k$ parameter sets have not yet been created). During training,
+we again fix the parameters of the leaders and update the parameters of the
+challengers through updates with the replay buffer. During each episode, we
+randomly sample one leader and one follower. Periodically, we save the
+parameters of the challengers and add them to the list of previous parameters.
+After a fixed number of steps, we select the top $k$ parameters by doing a
+round-robin evaluation of parameters against each other, discarding the rest
+of the parameters. To begin the next round, we clear the replay buffer and
+reinitialize the leaders and challengers with the top $k$ parameters. In our
+experiments, we use $k = 5$.
+
+By training against many leaders and selecting the parameters that perform
+best against all the other parameters, we prevent the agent from overfitting
+to playing against itself. Empirically, we observed that when setting $k = 1$,
+the agent performed far worse against unseen opponents than when $k = 5$.
+Additionally, using multiple challengers that share a replay buffer can be
+viewed as a form of bootstrapped DQN (TODO: cite). Although the multiple
+challengers do not share parameters, by allowing each challenger to update on
+the experiences of other challengers, we achieve better exploration. In
+contrast to just $\epsilon$-greedy approaches, which make locally non-greedy
+decisions, by observing the other challengers, we achieve temporally extended
+exploration, where we can explore with an entirely different policy. This
+leads to faster training and improved asymptotic performance.
+
+Our full self-play algorithm is summarized in the pseudocode in TODO.
 
 \section{Intermediate/Preliminary Results}
 
